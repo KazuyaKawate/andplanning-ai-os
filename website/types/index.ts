@@ -186,6 +186,39 @@ export type WorkflowInputField = {
   type:        'text' | 'textarea'
 }
 
+export type KnowledgeType = 'prompt' | 'template' | 'reference' | 'example'
+
+export type FactoryOutput = {
+  id:         string
+  factoryId:  string
+  workflowId: string
+  title:      string
+  preview:    string
+  model:      string
+  tokensUsed: number
+  createdAt:  string
+}
+
+export type FactoryKnowledge = {
+  id:          string
+  factoryId:   string
+  title:       string
+  description: string
+  type:        KnowledgeType
+  size:        number
+  updatedAt:   string
+}
+
+export type FactorySettings = {
+  factoryId:        string
+  model:            string
+  temperature:      number
+  maxTokens:        number
+  systemPrompt:     string
+  autoSaveMemory:   boolean
+  notifyOnComplete: boolean
+}
+
 export type OsSettings = {
   defaultModel:      string
   fallbackModel:     string

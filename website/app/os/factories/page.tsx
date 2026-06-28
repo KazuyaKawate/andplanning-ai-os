@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import Link from 'next/link'
 import StatusBadge from '@/components/os/StatusBadge'
 import MetricCard from '@/components/os/MetricCard'
 import {
@@ -183,10 +184,21 @@ function FactoryCard({ factory, onClick, selected }: {
         </div>
       )}
 
-      {/* Last activity */}
-      <p className="mt-3 text-[10px] text-slate-600 font-mono">
-        {formatRelativeTime(factory.lastActivity)} · {factory.memoryItems} memories
-      </p>
+      {/* Last activity + detail link */}
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-[10px] text-slate-600 font-mono">
+          {formatRelativeTime(factory.lastActivity)} · {factory.memoryItems} memories
+        </p>
+        {factory.status !== 'disabled' && (
+          <Link
+            href={`/os/factories/${factory.id}`}
+            onClick={e => e.stopPropagation()}
+            className="text-[10px] font-mono text-slate-600 hover:text-brand-cyan transition-colors"
+          >
+            詳細 →
+          </Link>
+        )}
+      </div>
     </motion.button>
   )
 }

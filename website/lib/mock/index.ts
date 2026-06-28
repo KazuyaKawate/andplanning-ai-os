@@ -11,7 +11,7 @@ import type {
   Workflow, WorkflowRun, WorkflowStep,
   FactoryRuntime, QueueItem, ActivityItem,
   MemoryEntry, DashboardMetrics, OsSettings, ModelOption,
-  WorkflowInputField,
+  WorkflowInputField, FactoryOutput, FactoryKnowledge, FactorySettings,
 } from '@/types'
 
 /* ======================================================================
@@ -815,6 +815,128 @@ AI Factory を使えば
     default:
       return `Workflow ${workflowId} completed successfully.\n\nInputs: ${JSON.stringify(inputs, null, 2)}`
   }
+}
+
+/* ======================================================================
+   FACTORY DETAIL — outputs per factory
+   Replace with: GET /api/factories/{id}/outputs
+   ====================================================================== */
+
+export const mockFactoryOutputs: FactoryOutput[] = [
+  {
+    id: 'out-001', factoryId: 'writing', workflowId: 'wf-001',
+    title: 'Note記事: AI OS 自動化が変えるコンテンツ制作の未来',
+    preview: '# AI OS 自動化が変えるコンテンツ制作の未来\n\nAI OSとは、複数のAIエージェントが連携してコンテンツ制作を自動化するシステムです。従来のツールと異なり、企画から公開まで一気通貫で処理できます。本記事では、実際の導入事例と ROI を詳しく解説します。',
+    model: 'claude-sonnet-4-6', tokensUsed: 18400, createdAt: ago(3),
+  },
+  {
+    id: 'out-002', factoryId: 'writing', workflowId: 'wf-002',
+    title: 'ブログ: Next.js 16 App Router 完全解説',
+    preview: '## Next.js 16 の新機能\n\nTurbopack が標準搭載となり、ビルド速度が従来比 3.7倍に向上しました。また Partial Prerendering が安定版として提供され、静的サイトと動的コンテンツのハイブリッド配信が容易になりました。',
+    model: 'claude-sonnet-4-6', tokensUsed: 12200, createdAt: ago(45),
+  },
+  {
+    id: 'out-003', factoryId: 'research', workflowId: 'wf-003',
+    title: 'トレンドリポート: 生成AI × コンテンツマーケ 2025年上半期',
+    preview: '## エグゼクティブサマリー\n\n2025年上半期の生成AI活用トレンドを24社・54事例から分析。最大の変化は「エージェント型AI」の急速な普及で、コンテンツ制作コストが平均 68% 削減されたことが確認されました。',
+    model: 'gpt-4o', tokensUsed: 24600, createdAt: ago(90),
+  },
+  {
+    id: 'out-004', factoryId: 'research', workflowId: 'wf-003',
+    title: '競合分析: AI コンテンツ生成ツール 比較レポート 2025',
+    preview: '## 調査対象\n\nJasper, Copy.ai, Notion AI, And Planning の4社を比較。評価軸: 出力品質・日本語対応・Workflow機能・価格。And Planning の差別化ポイントは Workflow Engine と Factory 分離アーキテクチャ。',
+    model: 'gpt-4o', tokensUsed: 19800, createdAt: ago(400),
+  },
+  {
+    id: 'out-005', factoryId: 'creator', workflowId: 'wf-004',
+    title: 'コンテンツ企画案: AI Factory 解説シリーズ（5本連続）',
+    preview: '## シリーズ概要\n\n「AI Factoryで変わる仕事術」5本連続企画。#1 概念編 → #2 セットアップ → #3 Writing活用 → #4 Research活用 → #5 ROI検証。各記事 2,000-3,000字、SEOスコア 85+ 目標。',
+    model: 'claude-sonnet-4-6', tokensUsed: 8800, createdAt: ago(120),
+  },
+  {
+    id: 'out-006', factoryId: 'video', workflowId: 'wf-005',
+    title: 'YouTube台本: AI OSとは？10分で完全理解できる解説',
+    preview: '## オープニング（0:00-0:30）\n「今日は話題の AI OS について、10分で完全に理解できるよう解説します。難しいと思っていた方も、この動画を見れば明日から使えるようになります」\n\n## Part1: 概念（0:30-3:00）',
+    model: 'claude-opus-4-8', tokensUsed: 15200, createdAt: ago(200),
+  },
+  {
+    id: 'out-007', factoryId: 'marketing', workflowId: 'wf-006',
+    title: 'SNS投稿セット: AI OS β リリース告知（3プラットフォーム）',
+    preview: '## X (Twitter)\nAI OS β版をリリースしました 🚀\n\n✅ Dashboard リアルタイム監視\n✅ Workflow 自動実行\n✅ Memory 蓄積\n\n完全無料でお試しください\n#AI自動化 #AIツール',
+    model: 'claude-sonnet-4-6', tokensUsed: 4200, createdAt: ago(480),
+  },
+  {
+    id: 'out-008', factoryId: 'fortune', workflowId: '',
+    title: '今月の運勢: 2025年7月 総合運レポート',
+    preview: '## 7月の総合運 ★★★★☆\n\n仕事運: 上昇気流。新プロジェクトのスタートに最適な時期。特に水曜日の決断が吉。\n\n人間関係: 協力者が現れる暗示あり。既存の人脈を大切に。',
+    model: 'claude-haiku-4-5-20251001', tokensUsed: 3100, createdAt: ago(720),
+  },
+]
+
+/* ======================================================================
+   FACTORY DETAIL — knowledge items per factory
+   Replace with: GET /api/factories/{id}/knowledge
+   ====================================================================== */
+
+export const mockFactoryKnowledge: FactoryKnowledge[] = [
+  // Writing
+  { id: 'kn-001', factoryId: 'writing', title: 'SEO執筆ガイドライン v2.4',      description: 'KW密度・見出し構成・メタ情報生成のルール集。Googleアルゴリズム対応済み',  type: 'reference', size: 4200,  updatedAt: ago(1440)  },
+  { id: 'kn-002', factoryId: 'writing', title: '本文執筆マスタープロンプト',      description: '9ステップ記事生成の core prompt。読者の課題→解決策→事例の構成定義',      type: 'prompt',    size: 2800,  updatedAt: ago(2880)  },
+  { id: 'kn-003', factoryId: 'writing', title: 'CTA文例集 v3',                  description: '業種・目的別 Call-to-Action テンプレート 48パターン収録',                  type: 'template',  size: 3600,  updatedAt: ago(5760)  },
+  // Research
+  { id: 'kn-004', factoryId: 'research', title: '情報収集プロンプトセット',       description: 'Web検索→フィルタリング→要約の3段階プロンプト',                           type: 'prompt',    size: 1900,  updatedAt: ago(2160)  },
+  { id: 'kn-005', factoryId: 'research', title: 'レポートテンプレート v2',        description: 'エグゼクティブサマリー＋本文＋引用リスト標準形式',                         type: 'template',  size: 2100,  updatedAt: ago(4320)  },
+  // Creator
+  { id: 'kn-006', factoryId: 'creator', title: 'ペルソナDB 2025',               description: 'ターゲット読者12パターンの詳細プロファイル。職種・課題・情報収集チャネル', type: 'reference', size: 5800,  updatedAt: ago(3600)  },
+  { id: 'kn-007', factoryId: 'creator', title: 'コンテンツ企画テンプレート',      description: 'タイトル・フック・構成・配信チャネル一体型テンプレート',                   type: 'template',  size: 2400,  updatedAt: ago(7200)  },
+  // Video
+  { id: 'kn-008', factoryId: 'video',   title: '台本テンプレート 3形式',         description: '解説系・エンタメ系・ドキュメンタリー形式のひな形。尺別バリエーション付き', type: 'template',  size: 6200,  updatedAt: ago(4800)  },
+  { id: 'kn-009', factoryId: 'video',   title: 'サムネイルデザインガイド',        description: 'CTR改善のためのサムネイル指示書フォーマット。色・文字・構図の基準',       type: 'reference', size: 1600,  updatedAt: ago(9600)  },
+  // Marketing
+  { id: 'kn-010', factoryId: 'marketing', title: 'トーン&マナー定義書',          description: 'ブランドボイス・禁止表現・SNS別スタイルガイド',                           type: 'reference', size: 3200,  updatedAt: ago(2880)  },
+  { id: 'kn-011', factoryId: 'marketing', title: 'ハッシュタグ辞書 v3',          description: 'カテゴリ別・フォロワー規模別・時期別ハッシュタグ集 (1,200語)',            type: 'reference', size: 8400,  updatedAt: ago(1440)  },
+  // Fortune
+  { id: 'kn-012', factoryId: 'fortune', title: '占術ナレッジベース',             description: '西洋占星術・四柱推命・タロットの解釈ガイドライン。24,000字の参照文書',   type: 'reference', size: 24000, updatedAt: ago(14400) },
+  { id: 'kn-013', factoryId: 'fortune', title: '運勢レポートフォーマット',        description: '月次・週次・日次運勢の出力テンプレート。絵文字・星評価付き',              type: 'template',  size: 3200,  updatedAt: ago(7200)  },
+]
+
+/* ======================================================================
+   FACTORY DETAIL — per-factory settings
+   Replace with: GET /api/factories/{id}/settings
+                 PATCH /api/factories/{id}/settings
+   ====================================================================== */
+
+export const mockFactorySettings: Record<string, FactorySettings> = {
+  writing: {
+    factoryId: 'writing', model: 'claude-sonnet-4-6', temperature: 0.7, maxTokens: 4096,
+    systemPrompt: 'あなたは熟練したコンテンツライターです。SEOに最適化された、読者の課題を解決する高品質な記事を執筆してください。文章は自然な日本語で、専門用語は適切に解説してください。',
+    autoSaveMemory: true, notifyOnComplete: true,
+  },
+  research: {
+    factoryId: 'research', model: 'gpt-4o', temperature: 0.3, maxTokens: 8192,
+    systemPrompt: 'あなたはデータ分析の専門家です。与えられたテーマについて客観的かつ包括的なリサーチを行い、根拠のある洞察を提供してください。信頼性の低い情報は除外し、出典を明示してください。',
+    autoSaveMemory: true, notifyOnComplete: true,
+  },
+  creator: {
+    factoryId: 'creator', model: 'claude-sonnet-4-6', temperature: 0.9, maxTokens: 2048,
+    systemPrompt: 'あなたはクリエイティブディレクターです。ターゲット読者の心を掴む独創的なコンテンツ企画を提案してください。トレンドを踏まえつつ、ブランドの世界観を守ってください。',
+    autoSaveMemory: false, notifyOnComplete: true,
+  },
+  video: {
+    factoryId: 'video', model: 'claude-opus-4-8', temperature: 0.8, maxTokens: 8192,
+    systemPrompt: 'あなたはYouTubeクリエイターのプロデューサーです。視聴者が最後まで見たくなる、エンゲージメントの高い動画台本を作成してください。冒頭3秒で掴み、適切なCTAで締めてください。',
+    autoSaveMemory: true, notifyOnComplete: false,
+  },
+  marketing: {
+    factoryId: 'marketing', model: 'claude-sonnet-4-6', temperature: 0.85, maxTokens: 2048,
+    systemPrompt: 'あなたはソーシャルメディアマーケターです。エンゲージメントを最大化するコピーを作成してください。各プラットフォーム（X・Instagram・LinkedIn）の特性に合わせた投稿を作ってください。',
+    autoSaveMemory: false, notifyOnComplete: false,
+  },
+  fortune: {
+    factoryId: 'fortune', model: 'claude-haiku-4-5-20251001', temperature: 1.2, maxTokens: 1024,
+    systemPrompt: 'あなたは霊験あらたかな占い師です。神秘的かつ希望に満ちた運勢を提供してください。科学的根拠より読者の心理的 wellbeing を優先し、前向きなメッセージを心がけてください。',
+    autoSaveMemory: false, notifyOnComplete: false,
+  },
 }
 
 /* ======================================================================
