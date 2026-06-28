@@ -20,6 +20,8 @@ import {
   mockFactorySettings,
   mockActivity,
   mockMemory,
+  mockSettings,
+  mockModels,
 } from '@/lib/mock'
 
 /* ── Simulation helpers ───────────────────────────────────────────── */
@@ -151,5 +153,23 @@ export const mockAdapter: OsApiAdapter = {
     if (factoryId) results = results.filter(m => m.factoryId === factoryId)
     if (search)    results = results.filter(m => m.title.includes(search) || m.summary.includes(search))
     return ok(results.slice(0, limit))
+  },
+
+  /* OS Settings & Models -------------------------------------------- */
+
+  async getSettings() {
+    await delay(60)
+    return ok({ ...mockSettings })
+  },
+
+  async patchSettings(req) {
+    await delay(150)
+    // Real: PATCH /api/settings  body: req
+    return ok({ ...mockSettings, ...req })
+  },
+
+  async getModels() {
+    await delay(50)
+    return ok([...mockModels])
   },
 }

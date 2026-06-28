@@ -12,7 +12,7 @@
 import type {
   DashboardMetrics, WorkflowRun, FactoryRuntime, ActivityItem, MemoryEntry,
   Workflow, FactoryOutput, FactoryKnowledge, FactorySettings,
-  WorkflowInputField,
+  WorkflowInputField, OsSettings, ModelOption,
 } from '@/types'
 
 /* ======================================================================
@@ -79,6 +79,16 @@ export type GetActivityResponse = ActivityItem[]
 export type GetMemoryRequest  = { factoryId?: string; search?: string; limit?: number }
 export type GetMemoryResponse = MemoryEntry[]
 
+/** GET /api/settings */
+export type GetSettingsResponse = OsSettings
+
+/** PATCH /api/settings */
+export type PatchSettingsRequest  = Partial<OsSettings>
+export type PatchSettingsResponse = OsSettings
+
+/** GET /api/models */
+export type GetModelsResponse = ModelOption[]
+
 /* ======================================================================
    Adapter interface — implement this to connect any backend
    ====================================================================== */
@@ -109,4 +119,9 @@ export interface OsApiAdapter {
   /* Activity & Memory */
   getActivity(req?: GetActivityRequest): Promise<ApiResult<GetActivityResponse>>
   getMemory(req?: GetMemoryRequest): Promise<ApiResult<GetMemoryResponse>>
+
+  /* OS Settings & Models */
+  getSettings(): Promise<ApiResult<GetSettingsResponse>>
+  patchSettings(req: PatchSettingsRequest): Promise<ApiResult<PatchSettingsResponse>>
+  getModels(): Promise<ApiResult<GetModelsResponse>>
 }
