@@ -11,6 +11,30 @@ export type Factory = {
   icon: string
   status: 'active' | 'stub' | 'planned'
   accentColor: string
+  features: string[]
+  releaseLabel: string
+}
+
+export type OsComponent = {
+  id: string
+  name: string
+  descriptionJa: string
+  icon: string
+}
+
+export type OsLayer = {
+  id: string
+  title: string
+  titleJa: string
+  components: OsComponent[]
+}
+
+export type RoadmapItem = {
+  date: string
+  title: string
+  descriptionJa: string
+  status: 'completed' | 'in-progress' | 'planned'
+  isHighlight?: boolean
 }
 
 export type Phase = {
