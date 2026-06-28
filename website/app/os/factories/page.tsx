@@ -1,22 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import Link from 'next/link'
 import StatusBadge from '@/components/os/StatusBadge'
 import MetricCard from '@/components/os/MetricCard'
-import {
-  mockFactories, mockWorkflows, mockWorkflowRuns,
-  formatRelativeTime,
-} from '@/lib/mock'
-import type { FactoryRuntime } from '@/types'
+import { api } from '@/lib/api/runtime'
+import { formatRelativeTime } from '@/lib/mock'
+import type { FactoryRuntime, Workflow, WorkflowRun } from '@/types'
 
-/* ========== Factory detail panel ========== */
+/* ======================================================================
+   Factory detail slide panel
+   ====================================================================== */
 
-function FactoryDetail({ factory, onClose }: { factory: FactoryRuntime; onClose: () => void }) {
-  const workflows = mockWorkflows.filter(w => w.factoryId === factory.id)
-  const runs = mockWorkflowRuns.filter(r => r.factoryId === factory.id).slice(0, 5)
-
+function FactoryDetail({
+  factory, workflows, runs, onClose,
+}: {
+  factory:   FactoryRuntime
+  workflows: Workflow[]
+  runs:      WorkflowRun[]
+  onClose:   () => void
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, x: 40 }}
@@ -104,7 +108,6 @@ function FactoryDetail({ factory, onClose }: { factory: FactoryRuntime; onClose:
           </div>
         )}
 
-        {/* Last activity */}
         <p className="text-[10px] text-slate-600 font-mono">
           Last activity: {formatRelativeTime(factory.lastActivity)}
         </p>
@@ -113,11 +116,13 @@ function FactoryDetail({ factory, onClose }: { factory: FactoryRuntime; onClose:
   )
 }
 
-/* ========== Factory card ========== */
+/* ======================================================================
+   Factory card
+   ====================================================================== */
 
 function FactoryCard({ factory, onClick, selected }: {
-  factory: FactoryRuntime
-  onClick: () => void
+  factory:  FactoryRuntime
+  onClick:  () => void
   selected: boolean
 }) {
   return (
@@ -135,7 +140,6 @@ function FactoryCard({ factory, onClick, selected }: {
       ].join(' ')}
       style={selected ? { borderColor: factory.accentColor + '60' } : {}}
     >
-      {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <motion.span
@@ -154,7 +158,6 @@ function FactoryCard({ factory, onClick, selected }: {
         <StatusBadge status={factory.status} dot />
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         <div className="text-center">
           <p className="text-lg font-bold font-mono" style={{ color: factory.accentColor }}>{factory.completedToday}</p>
@@ -172,7 +175,6 @@ function FactoryCard({ factory, onClick, selected }: {
         </div>
       </div>
 
-      {/* Active bar */}
       {factory.status === 'active' && (
         <div className="h-0.5 rounded-full bg-white/[0.05] overflow-hidden">
           <motion.div
@@ -184,7 +186,6 @@ function FactoryCard({ factory, onClick, selected }: {
         </div>
       )}
 
-      {/* Last activity + detail link */}
       <div className="mt-3 flex items-center justify-between">
         <p className="text-[10px] text-slate-600 font-mono">
           {formatRelativeTime(factory.lastActivity)} · {factory.memoryItems} memories
@@ -203,22 +204,82 @@ function FactoryCard({ factory, onClick, selected }: {
   )
 }
 
-/* ========== Page ========== */
+/* ======================================================================
+   Page
+   ====================================================================== */
 
 export default function FactoriesPage() {
-  const [selected, setSelected] = useState<FactoryRuntime | null>(null)
+  const [factories,    setFactories]    = useState<FactoryRuntime[]>([])
+  const [isLoading,    setIsLoading]    = useState(true)
+  const [error,        setError]        = useState<string | null>(null)
+  const [selected,     setSelected]     = useState<FactoryRuntime | null>(null)
+  const [panelWf,      setPanelWf]      = useState<Workflow[]>([])
+  const [panelRuns,    setPanelRuns]    = useState<WorkflowRun[]>([])
 
-  const activeCount   = mockFactories.filter(f => f.status === 'active').length
-  const totalDone     = mockFactories.reduce((s, f) => s + f.completedToday, 0)
-  const totalErrors   = mockFactories.reduce((s, f) => s + f.errorCount, 0)
-  const totalMemories = mockFactories.reduce((s, f) => s + f.memoryItems, 0)
+  // Initial factory list load
+  useEffect(() => {
+    const tid = setTimeout(() => {
+      setIsLoading(true)
+      void api.getFactories().then(res => {
+        if (res.ok) setFactories(res.data)
+        else setError(res.error)
+        setIsLoading(false)
+      }).catch(e => {
+        setError(e instanceof Error ? e.message : String(e))
+        setIsLoading(false)
+      })
+    }, 0)
+    return () => clearTimeout(tid)
+  }, [])
+
+  // Fetch workflows + recent runs for the selected factory's detail panel
+  useEffect(() => {
+    const factoryId = selected?.id
+    const tid = setTimeout(() => {
+      if (!factoryId) { setPanelWf([]); setPanelRuns([]); return }
+      void Promise.all([
+        api.getWorkflows({ factoryId }),
+        api.getWorkflowRuns({ factoryId, limit: 5 }),
+      ]).then(([wfRes, runsRes]) => {
+        setPanelWf(wfRes.ok     ? wfRes.data  : [])
+        setPanelRuns(runsRes.ok ? runsRes.data : [])
+      })
+    }, 0)
+    return () => clearTimeout(tid)
+  }, [selected])
+
+  // Derived summary metrics
+  const activeCount   = factories.filter(f => f.status === 'active').length
+  const totalDone     = factories.reduce((s, f) => s + f.completedToday, 0)
+  const totalErrors   = factories.reduce((s, f) => s + f.errorCount, 0)
+  const totalMemories = factories.reduce((s, f) => s + f.memoryItems, 0)
 
   return (
     <div className="space-y-5 max-w-6xl">
+      {/* Loading flash bar — mirrors Dashboard design */}
+      {isLoading && (
+        <div className="fixed top-14 left-16 lg:left-56 right-0 h-[2px] z-50 overflow-hidden">
+          <motion.div
+            className="h-full bg-gradient-to-r from-brand-blue to-brand-cyan"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
+          />
+        </div>
+      )}
+
       <div>
         <h1 className="text-xl font-bold font-heading text-white">Factory Dashboard</h1>
-        <p className="text-xs text-slate-600 mt-0.5">6 Factories — {activeCount} Active</p>
+        <p className="text-xs text-slate-600 mt-0.5">
+          {factories.length > 0 ? `${factories.length} Factories — ${activeCount} Active` : '読み込み中…'}
+        </p>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/05 px-4 py-3 text-xs text-red-400 font-mono">
+          {error}
+        </div>
+      )}
 
       {/* Summary metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -229,18 +290,25 @@ export default function FactoriesPage() {
       </div>
 
       {/* Factory grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {mockFactories.map(factory => (
-          <FactoryCard
-            key={factory.id}
-            factory={factory}
-            selected={selected?.id === factory.id}
-            onClick={() => factory.status !== 'disabled' && setSelected(
-              selected?.id === factory.id ? null : factory
-            )}
-          />
-        ))}
-      </div>
+      {factories.length === 0 && !isLoading ? (
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-12 text-center">
+          <p className="text-slate-600 text-sm">Factoryが見つかりません</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {factories.map(factory => (
+            <FactoryCard
+              key={factory.id}
+              factory={factory}
+              selected={selected?.id === factory.id}
+              onClick={() => {
+                if (factory.status === 'disabled') return
+                setSelected(selected?.id === factory.id ? null : factory)
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Detail panel */}
       <AnimatePresence>
@@ -253,7 +321,12 @@ export default function FactoriesPage() {
               className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
               onClick={() => setSelected(null)}
             />
-            <FactoryDetail factory={selected} onClose={() => setSelected(null)} />
+            <FactoryDetail
+              factory={selected}
+              workflows={panelWf}
+              runs={panelRuns}
+              onClose={() => setSelected(null)}
+            />
           </>
         )}
       </AnimatePresence>

@@ -1,18 +1,15 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import Link from 'next/link'
 import StatusBadge from '@/components/os/StatusBadge'
-import {
-  mockFactories, mockWorkflows, mockWorkflowRuns,
-  mockMemory, mockFactoryOutputs, mockFactoryKnowledge, mockFactorySettings,
-  formatRelativeTime, formatDuration, formatTokens,
-} from '@/lib/mock'
+import { api } from '@/lib/api/runtime'
+import { formatRelativeTime, formatDuration, formatTokens } from '@/lib/mock'
 import type {
   FactoryRuntime, FactoryKnowledge, FactorySettings,
-  MemoryEntry, MemoryTag,
+  MemoryEntry, MemoryTag, Workflow, WorkflowRun, FactoryOutput,
 } from '@/types'
 
 /* ======================================================================
@@ -28,6 +25,32 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'history',   label: 'History'   },
   { id: 'settings',  label: 'Settings'  },
 ]
+
+/* ======================================================================
+   Page-level data shape
+   ====================================================================== */
+
+type PageData = {
+  factory:   FactoryRuntime
+  workflows: Workflow[]
+  runs:      WorkflowRun[]
+  outputs:   FactoryOutput[]
+  knowledge: FactoryKnowledge[]
+  settings:  FactorySettings
+  memory:    MemoryEntry[]
+}
+
+function makeDefaultSettings(factoryId: string): FactorySettings {
+  return {
+    factoryId,
+    model:            'claude-sonnet-4-6',
+    temperature:      0.7,
+    maxTokens:        4096,
+    systemPrompt:     '',
+    autoSaveMemory:   false,
+    notifyOnComplete: false,
+  }
+}
 
 /* ======================================================================
    Shared helpers
@@ -55,15 +78,44 @@ const knowledgeTypeBadge: Record<FactoryKnowledge['type'], string> = {
 }
 
 /* ======================================================================
+   Loading skeleton
+   ====================================================================== */
+
+function PageLoadingSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Flash bar — mirrors Dashboard loading indicator */}
+      <div className="fixed top-14 left-16 lg:left-56 right-0 h-[2px] z-50 overflow-hidden">
+        <motion.div
+          className="h-full bg-gradient-to-r from-brand-blue to-brand-cyan"
+          animate={{ x: ['-100%', '100%'] }}
+          transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
+        />
+      </div>
+      <div className="h-40 rounded-2xl border border-white/[0.06] bg-white/[0.01] animate-pulse" />
+      <div className="h-10 w-80 rounded-xl border border-white/[0.05] bg-white/[0.01] animate-pulse" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-20 rounded-xl border border-white/[0.05] bg-white/[0.01] animate-pulse" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ======================================================================
    Overview Tab
    ====================================================================== */
 
-function OverviewTab({ factory }: { factory: FactoryRuntime }) {
-  const workflows  = mockWorkflows.filter(w => w.factoryId === factory.id)
-  const runs       = mockWorkflowRuns.filter(r => r.factoryId === factory.id)
-  const outputs    = mockFactoryOutputs.filter(o => o.factoryId === factory.id)
-  const knowledge  = mockFactoryKnowledge.filter(k => k.factoryId === factory.id)
-
+function OverviewTab({
+  factory, workflows, runs, outputs, knowledge,
+}: {
+  factory:   FactoryRuntime
+  workflows: Workflow[]
+  runs:      WorkflowRun[]
+  outputs:   FactoryOutput[]
+  knowledge: FactoryKnowledge[]
+}) {
   const totalTokens = runs.reduce((s, r) => s + (r.tokensUsed ?? 0), 0)
   const successRate = runs.length > 0
     ? Math.round(runs.filter(r => r.status === 'completed').length / runs.length * 100)
@@ -89,7 +141,7 @@ function OverviewTab({ factory }: { factory: FactoryRuntime }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Left: Latest Output */}
+        {/* Left: Latest Output + Recent runs */}
         <div className="lg:col-span-2 space-y-4">
           {latestOutput ? (
             <div>
@@ -118,7 +170,6 @@ function OverviewTab({ factory }: { factory: FactoryRuntime }) {
             </div>
           )}
 
-          {/* Recent runs */}
           <div>
             <h3 className="text-[11px] text-slate-500 uppercase tracking-widest font-semibold mb-3">Recent Workflows</h3>
             <div className="space-y-2">
@@ -148,7 +199,7 @@ function OverviewTab({ factory }: { factory: FactoryRuntime }) {
           </div>
         </div>
 
-        {/* Right: Knowledge list */}
+        {/* Right: Knowledge + Workflow list */}
         <div>
           <h3 className="text-[11px] text-slate-500 uppercase tracking-widest font-semibold mb-3">
             Knowledge ({knowledge.length})
@@ -180,7 +231,6 @@ function OverviewTab({ factory }: { factory: FactoryRuntime }) {
             )}
           </div>
 
-          {/* Workflow summary */}
           <h3 className="text-[11px] text-slate-500 uppercase tracking-widest font-semibold mt-5 mb-3">
             Workflows ({workflows.length})
           </h3>
@@ -209,9 +259,12 @@ function OverviewTab({ factory }: { factory: FactoryRuntime }) {
    Workflow Tab
    ====================================================================== */
 
-function WorkflowTab({ factory }: { factory: FactoryRuntime }) {
-  const workflows = mockWorkflows.filter(w => w.factoryId === factory.id)
-
+function WorkflowTab({
+  workflows, runs,
+}: {
+  workflows: Workflow[]
+  runs:      WorkflowRun[]
+}) {
   if (workflows.length === 0) {
     return (
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-10 text-center">
@@ -223,7 +276,7 @@ function WorkflowTab({ factory }: { factory: FactoryRuntime }) {
   return (
     <div className="space-y-3">
       {workflows.map(wf => {
-        const latestRun = mockWorkflowRuns.find(r => r.workflowId === wf.id)
+        const latestRun = runs.find(r => r.workflowId === wf.id)
         return (
           <motion.div
             key={wf.id}
@@ -242,7 +295,6 @@ function WorkflowTab({ factory }: { factory: FactoryRuntime }) {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="mt-3 flex items-center gap-4 text-[10px] font-mono text-slate-600">
               <span>{wf.stepCount} steps</span>
               <span>avg {formatDuration(wf.avgDurationMs)}</span>
@@ -253,7 +305,6 @@ function WorkflowTab({ factory }: { factory: FactoryRuntime }) {
               {wf.lastRunAt && <span>{formatRelativeTime(wf.lastRunAt)}</span>}
             </div>
 
-            {/* Latest run steps */}
             {latestRun && (
               <div className="flex gap-0.5 mt-3">
                 {latestRun.steps.map((step, i) => (
@@ -262,10 +313,10 @@ function WorkflowTab({ factory }: { factory: FactoryRuntime }) {
                     title={step.name}
                     className={[
                       'h-1.5 flex-1 rounded-full',
-                      step.status === 'done'    ? 'bg-emerald-500'    : '',
-                      step.status === 'running' ? 'bg-brand-blue animate-pulse' : '',
-                      step.status === 'error'   ? 'bg-red-500'        : '',
-                      step.status === 'pending' ? 'bg-white/[0.08]'   : '',
+                      step.status === 'done'    ? 'bg-emerald-500'             : '',
+                      step.status === 'running' ? 'bg-brand-blue animate-pulse': '',
+                      step.status === 'error'   ? 'bg-red-500'                 : '',
+                      step.status === 'pending' ? 'bg-white/[0.08]'            : '',
                     ].join(' ')}
                     style={{ animationDelay: `${i * 0.04}s` }}
                   />
@@ -273,7 +324,6 @@ function WorkflowTab({ factory }: { factory: FactoryRuntime }) {
               </div>
             )}
 
-            {/* Tags + actions */}
             <div className="mt-4 flex items-center justify-between gap-3">
               <div className="flex gap-1.5 flex-wrap">
                 {wf.tags.map(tag => (
@@ -325,21 +375,26 @@ function MemoryTagChip({ tag }: { tag: MemoryTag }) {
   )
 }
 
-function MemoryTab({ factoryId }: { factoryId: string }) {
-  const [search, setSearch]     = useState('')
+function MemoryTab({
+  entries,
+}: {
+  entries: MemoryEntry[]
+}) {
+  const [search, setSearch]       = useState('')
   const [tagFilter, setTagFilter] = useState<MemoryTag | 'all'>('all')
-  const [selected, setSelected] = useState<MemoryEntry | null>(null)
+  const [selected, setSelected]   = useState<MemoryEntry | null>(null)
 
-  const entries = useMemo(() => {
-    return mockMemory
-      .filter(m => m.factoryId === factoryId)
+  const allTags = useMemo(
+    () => Array.from(new Set(entries.flatMap(m => m.tags))) as MemoryTag[],
+    [entries],
+  )
+
+  const filtered = useMemo(
+    () => entries
       .filter(m => !search || m.title.includes(search) || m.summary.includes(search))
-      .filter(m => tagFilter === 'all' || m.tags.includes(tagFilter))
-  }, [factoryId, search, tagFilter])
-
-  const allTags = Array.from(
-    new Set(mockMemory.filter(m => m.factoryId === factoryId).flatMap(m => m.tags))
-  ) as MemoryTag[]
+      .filter(m => tagFilter === 'all' || m.tags.includes(tagFilter)),
+    [entries, search, tagFilter],
+  )
 
   return (
     <div className="space-y-4">
@@ -384,10 +439,14 @@ function MemoryTab({ factoryId }: { factoryId: string }) {
       <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
         {entries.length === 0 ? (
           <div className="p-10 text-center">
+            <p className="text-slate-600 text-sm">メモリがありません</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="p-10 text-center">
             <p className="text-slate-600 text-sm">一致するメモリが見つかりません</p>
           </div>
         ) : (
-          entries.map((entry) => (
+          filtered.map(entry => (
             <motion.button
               key={entry.id}
               onClick={() => setSelected(entry)}
@@ -463,9 +522,13 @@ function MemoryTab({ factoryId }: { factoryId: string }) {
    History Tab
    ====================================================================== */
 
-function HistoryTab({ factoryId, accentColor }: { factoryId: string; accentColor: string }) {
-  const runs    = mockWorkflowRuns.filter(r => r.factoryId === factoryId)
-  const outputs = mockFactoryOutputs.filter(o => o.factoryId === factoryId)
+function HistoryTab({
+  runs, outputs, accentColor,
+}: {
+  runs:        WorkflowRun[]
+  outputs:     FactoryOutput[]
+  accentColor: string
+}) {
   const maxTokens = Math.max(...outputs.map(o => o.tokensUsed), 1)
 
   return (
@@ -476,7 +539,6 @@ function HistoryTab({ factoryId, accentColor }: { factoryId: string; accentColor
           Workflow 実行履歴 ({runs.length}件)
         </h3>
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
-          {/* Table header */}
           <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-white/[0.05] text-[10px] text-slate-600 uppercase tracking-widest font-mono">
             <span className="col-span-4">Workflow</span>
             <span className="col-span-2">Status</span>
@@ -622,22 +684,35 @@ const MODEL_OPTIONS = [
   { id: 'gemini-2.0-flash',          label: 'Gemini 2.0 Flash',     provider: 'Google'    },
 ]
 
-function SettingsTab({ factoryId }: { factoryId: string }) {
-  const defaultSettings = mockFactorySettings[factoryId] ?? {
-    factoryId, model: 'claude-sonnet-4-6', temperature: 0.7, maxTokens: 4096,
-    systemPrompt: '', autoSaveMemory: false, notifyOnComplete: false,
-  }
-  const [settings, setSettings] = useState<FactorySettings>(defaultSettings)
-  const [saved, setSaved] = useState(false)
+function SettingsTab({
+  factoryId, initialSettings,
+}: {
+  factoryId:       string
+  initialSettings: FactorySettings
+}) {
+  const [settings,   setSettings]   = useState<FactorySettings>(initialSettings)
+  const [saved,      setSaved]      = useState(false)
+  const [saving,     setSaving]     = useState(false)
+  const [saveError,  setSaveError]  = useState<string | null>(null)
 
-  function handleSave() {
-    // Real: PATCH /api/factories/{factoryId}/settings  { settings }
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
-
-  function handleReset() {
-    setSettings(defaultSettings)
+  async function handleSave() {
+    setSaving(true)
+    setSaveError(null)
+    const res = await api.patchFactorySettings(factoryId, {
+      model:            settings.model,
+      temperature:      settings.temperature,
+      maxTokens:        settings.maxTokens,
+      systemPrompt:     settings.systemPrompt,
+      autoSaveMemory:   settings.autoSaveMemory,
+      notifyOnComplete: settings.notifyOnComplete,
+    })
+    setSaving(false)
+    if (res.ok) {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } else {
+      setSaveError(res.error)
+    }
   }
 
   return (
@@ -658,7 +733,6 @@ function SettingsTab({ factoryId }: { factoryId: string }) {
           </select>
         </div>
 
-        {/* Temperature */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="text-xs text-slate-500">Temperature</label>
@@ -680,7 +754,6 @@ function SettingsTab({ factoryId }: { factoryId: string }) {
           </div>
         </div>
 
-        {/* Max Tokens */}
         <div>
           <label className="block text-xs text-slate-500 mb-2">Max Tokens</label>
           <input
@@ -728,36 +801,44 @@ function SettingsTab({ factoryId }: { factoryId: string }) {
       </div>
 
       {/* Save / Reset */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <button
-          onClick={handleSave}
+          onClick={() => void handleSave()}
+          disabled={saving}
           className={[
-            'flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors',
+            'flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60',
             saved
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
               : 'bg-brand-blue text-white hover:bg-brand-blue/80',
           ].join(' ')}
         >
-          {saved ? '✓ 保存しました' : '保存'}
+          {saving ? '保存中…' : saved ? '✓ 保存しました' : '保存'}
         </button>
         <button
-          onClick={handleReset}
+          onClick={() => setSettings(initialSettings)}
           className="px-5 py-2.5 rounded-lg text-sm text-slate-500 border border-white/[0.08] hover:text-slate-300 hover:border-white/[0.15] transition-colors"
         >
           デフォルトに戻す
         </button>
+        {saveError && (
+          <p className="text-xs text-red-400 font-mono">{saveError}</p>
+        )}
       </div>
     </div>
   )
 }
 
 /* ======================================================================
-   Factory Hero (always visible)
+   Factory Hero
    ====================================================================== */
 
-function FactoryHero({ factory }: { factory: FactoryRuntime }) {
-  const workflows = mockWorkflows.filter(w => w.factoryId === factory.id)
-  const runs      = mockWorkflowRuns.filter(r => r.factoryId === factory.id)
+function FactoryHero({
+  factory, workflows, runs,
+}: {
+  factory:   FactoryRuntime
+  workflows: Workflow[]
+  runs:      WorkflowRun[]
+}) {
   const totalTokens = runs.reduce((s, r) => s + (r.tokensUsed ?? 0), 0)
 
   return (
@@ -820,15 +901,60 @@ function FactoryHero({ factory }: { factory: FactoryRuntime }) {
 
 export default function FactoryDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const [tab, setTab] = useState<Tab>('overview')
+  const [tab,       setTab]       = useState<Tab>('overview')
+  const [data,      setData]      = useState<PageData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error,     setError]     = useState<string | null>(null)
 
-  // Real: GET /api/factories/{id}
-  const factory = mockFactories.find(f => f.id === id)
+  useEffect(() => {
+    if (!id) return
+    let alive = true
 
-  if (!factory) {
+    const tid = setTimeout(() => {
+      setIsLoading(true)
+      setError(null)
+
+      void Promise.all([
+        api.getFactories(),
+        api.getWorkflows({ factoryId: id }),
+        api.getWorkflowRuns({ factoryId: id }),
+        api.getFactoryOutputs(id),
+        api.getFactoryKnowledge(id),
+        api.getFactorySettings(id),
+        api.getMemory({ factoryId: id }),
+      ]).then(([factoriesRes, workflowsRes, runsRes, outputsRes, knowledgeRes, settingsRes, memoryRes]) => {
+        if (!alive) return
+
+        if (!factoriesRes.ok) { setError(factoriesRes.error); setIsLoading(false); return }
+        const factory = factoriesRes.data.find(f => f.id === id)
+        if (!factory) { setError(`Factory "${id}" が見つかりません`); setIsLoading(false); return }
+
+        setData({
+          factory,
+          workflows: workflowsRes.ok ? workflowsRes.data : [],
+          runs:      runsRes.ok      ? runsRes.data      : [],
+          outputs:   outputsRes.ok   ? outputsRes.data   : [],
+          knowledge: knowledgeRes.ok ? knowledgeRes.data : [],
+          settings:  settingsRes.ok  ? settingsRes.data  : makeDefaultSettings(id),
+          memory:    memoryRes.ok    ? memoryRes.data    : [],
+        })
+        setIsLoading(false)
+      }).catch(e => {
+        if (!alive) return
+        setError(e instanceof Error ? e.message : String(e))
+        setIsLoading(false)
+      })
+    }, 0)
+
+    return () => { alive = false; clearTimeout(tid) }
+  }, [id])
+
+  if (isLoading) return <PageLoadingSkeleton />
+
+  if (error || !data) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="text-slate-500 text-sm">Factory &ldquo;{id}&rdquo; が見つかりません</p>
+        <p className="text-slate-500 text-sm">{error ?? 'データを取得できませんでした'}</p>
         <Link href="/os/factories" className="text-xs text-brand-cyan hover:underline">
           ← Factories 一覧へ
         </Link>
@@ -836,9 +962,10 @@ export default function FactoryDetailPage() {
     )
   }
 
+  const { factory, workflows, runs, outputs, knowledge, settings, memory } = data
+
   return (
     <div className="max-w-5xl space-y-0">
-      {/* Back link */}
       <div className="mb-4">
         <Link
           href="/os/factories"
@@ -848,8 +975,7 @@ export default function FactoryDetailPage() {
         </Link>
       </div>
 
-      {/* Hero */}
-      <FactoryHero factory={factory} />
+      <FactoryHero factory={factory} workflows={workflows} runs={runs} />
 
       {/* Tab bar — sticky below topbar */}
       <div className="sticky top-0 z-10 bg-[#060C18] border-b border-white/[0.06] -mx-4 lg:-mx-6 px-4 lg:px-6 mt-5">
@@ -876,7 +1002,6 @@ export default function FactoryDetailPage() {
         </div>
       </div>
 
-      {/* Tab content */}
       <div className="pt-6">
         <AnimatePresence mode="wait">
           <motion.div
@@ -886,11 +1011,11 @@ export default function FactoryDetailPage() {
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2 }}
           >
-            {tab === 'overview'  && <OverviewTab  factory={factory} />}
-            {tab === 'workflow'  && <WorkflowTab  factory={factory} />}
-            {tab === 'memory'    && <MemoryTab    factoryId={factory.id} />}
-            {tab === 'history'   && <HistoryTab   factoryId={factory.id} accentColor={factory.accentColor} />}
-            {tab === 'settings'  && <SettingsTab  factoryId={factory.id} />}
+            {tab === 'overview'  && <OverviewTab  factory={factory} workflows={workflows} runs={runs} outputs={outputs} knowledge={knowledge} />}
+            {tab === 'workflow'  && <WorkflowTab  workflows={workflows} runs={runs} />}
+            {tab === 'memory'    && <MemoryTab    entries={memory} />}
+            {tab === 'history'   && <HistoryTab   runs={runs} outputs={outputs} accentColor={factory.accentColor} />}
+            {tab === 'settings'  && <SettingsTab  factoryId={factory.id} initialSettings={settings} />}
           </motion.div>
         </AnimatePresence>
       </div>
