@@ -1,6 +1,7 @@
 'use client'
 
-import { motion } from 'motion/react'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import SectionWrapper from '@/components/ui/SectionWrapper'
 import Badge from '@/components/ui/Badge'
 import SmartImage from '@/components/ui/SmartImage'
@@ -15,7 +16,7 @@ const container = {
   visible: { transition: { staggerChildren: 0.09 } },
 }
 const item = {
-  hidden:  { opacity: 0, y: 28 },
+  hidden:  { opacity: 0, y: 32 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] as const } },
 }
 
@@ -36,58 +37,86 @@ const statusLabelMap: Record<Factory['status'], string> = {
 /* ========== FactoryCard ========== */
 
 function FactoryCard({ factory }: { factory: Factory }) {
+  const [hovered, setHovered] = useState(false)
   const isActive     = factory.status === 'active'
   const factoryImage = factoryImages[factory.id as keyof typeof factoryImages]
 
   return (
     <motion.article
       variants={item}
-      className="group relative flex flex-col rounded-2xl border border-slate-100 bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-slate-200/80 hover:border-slate-200"
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      whileHover={{ y: -6 }}
+      transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+      className="group relative flex flex-col rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-slate-200/70 hover:border-slate-200 transition-shadow duration-300"
     >
-      {/* Factory image area (fill モード + ホバー拡大) */}
-      <div className="relative h-40 shrink-0 overflow-hidden bg-slate-100">
+      {/* Factory image area */}
+      <div className="relative h-52 shrink-0 overflow-hidden bg-slate-100">
         {factoryImage && (
           <SmartImage
             image={factoryImage}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-110"
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
           />
         )}
-        {/* Gradient overlay */}
+
+        {/* Gradient overlay — base */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"
+          className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent pointer-events-none"
           aria-hidden="true"
         />
+
+        {/* Accent color overlay on hover */}
+        <AnimatePresence>
+          {hovered && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: `linear-gradient(135deg, ${factory.accentColor}22 0%, transparent 60%)`,
+              }}
+              aria-hidden="true"
+            />
+          )}
+        </AnimatePresence>
+
         {/* Status badge */}
         <div className="absolute top-3 right-3">
           <Badge variant={statusVariantMap[factory.status]}>
             {statusLabelMap[factory.status]}
           </Badge>
         </div>
+
+        {/* Factory icon — overlay bottom left */}
+        <div className="absolute bottom-3 left-4">
+          <motion.span
+            className="text-3xl leading-none drop-shadow-lg"
+            style={{ color: factory.accentColor }}
+            animate={{ scale: hovered ? 1.15 : 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            aria-hidden="true"
+          >
+            {factory.icon}
+          </motion.span>
+        </div>
       </div>
 
       {/* Content */}
       <div className="flex flex-col flex-1 p-7">
-        {/* Icon + Title */}
-        <div className="flex items-center gap-3">
-          <span
-            className="text-3xl leading-none transition-transform duration-300 group-hover:scale-110"
-            style={{ color: factory.accentColor }}
-            aria-hidden="true"
-          >
-            {factory.icon}
-          </span>
-          <div>
-            <h3 className="text-xl font-bold font-heading text-slate-900 tracking-tight">
-              {factory.name}
-            </h3>
-            <p className="text-sm text-slate-400">{factory.nameJa}</p>
-          </div>
+        {/* Title */}
+        <div>
+          <h3 className="text-xl font-bold font-heading text-slate-900 tracking-tight">
+            {factory.name}
+          </h3>
+          <p className="text-sm text-slate-400">{factory.nameJa}</p>
         </div>
 
         {/* Description */}
-        <p className="mt-5 text-sm text-slate-500 leading-relaxed">
+        <p className="mt-4 text-sm text-slate-500 leading-relaxed">
           {factory.descriptionJa}
         </p>
 
@@ -97,9 +126,11 @@ function FactoryCard({ factory }: { factory: Factory }) {
           <ul className="space-y-2">
             {factory.features.map((f) => (
               <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
-                <span
-                  className="w-1 h-1 rounded-full shrink-0 mt-1.5"
+                <motion.span
+                  className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5"
                   style={{ backgroundColor: factory.accentColor }}
+                  animate={{ scale: hovered ? 1.4 : 1 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                   aria-hidden="true"
                 />
                 {f}
@@ -112,13 +143,23 @@ function FactoryCard({ factory }: { factory: Factory }) {
         <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between">
           <span className="text-xs text-slate-400">β 公開予定</span>
           <span
-            className="text-sm font-bold font-mono"
-            style={{ color: isActive ? '#2563EB' : '#94A3B8' }}
+            className="text-sm font-bold font-mono transition-colors duration-300"
+            style={{ color: isActive ? factory.accentColor : '#94A3B8' }}
           >
             {factory.releaseLabel}
           </span>
         </div>
       </div>
+
+      {/* Bottom accent line that appears on hover */}
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 h-[3px]"
+        style={{ backgroundColor: factory.accentColor }}
+        initial={{ scaleX: 0, originX: 0 }}
+        animate={{ scaleX: hovered ? 1 : 0 }}
+        transition={{ duration: 0.35, ease: [0.21, 0.47, 0.32, 0.98] }}
+        aria-hidden="true"
+      />
     </motion.article>
   )
 }
@@ -148,7 +189,7 @@ export default function Factories() {
         </motion.div>
 
         {/* Factory grid */}
-        <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
           {factories.map((factory) => (
             <FactoryCard key={factory.id} factory={factory} />
           ))}
