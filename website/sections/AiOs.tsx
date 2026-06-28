@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import SectionWrapper from '@/components/ui/SectionWrapper'
 import Badge from '@/components/ui/Badge'
 import SmartImage from '@/components/ui/SmartImage'
@@ -22,21 +22,103 @@ const item = {
 
 /* ========== Layer Colors ========== */
 
-const layerStyles: Record<string, { bg: string }> = {
-  foundation: { bg: 'bg-brand-deep-navy'  },
-  engine:     { bg: 'bg-brand-navy'       },
-  factory:    { bg: 'bg-brand-navy-light' },
+const layerStyles: Record<string, { bg: string; accent: string; accentText: string }> = {
+  foundation: { bg: 'bg-brand-deep-navy', accent: 'brand-cyan',       accentText: 'text-brand-cyan'        },
+  engine:     { bg: 'bg-brand-navy',      accent: 'brand-blue-bright', accentText: 'text-brand-blue-bright' },
+  factory:    { bg: 'bg-brand-navy-light', accent: 'white',            accentText: 'text-white'             },
 }
 
-/* ========== Sub-components ========== */
+/* ========== Pulsing Connector ========== */
 
 function ConnectorArrow() {
   return (
-    <div className="flex justify-center py-2" aria-hidden="true">
-      <div className="flex flex-col items-center">
-        <div className="w-px h-5 bg-gradient-to-b from-white/20 to-white/5" />
-        <span className="text-white/30 text-xs">↓</span>
+    <div className="flex justify-center py-1" aria-hidden="true">
+      <div className="flex flex-col items-center gap-0.5">
+        <motion.div
+          className="w-px h-4 bg-gradient-to-b from-white/30 to-white/10"
+          animate={{ scaleY: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+        />
+        <motion.span
+          className="text-white/40 text-xs leading-none"
+          animate={{ y: [0, 3, 0], opacity: [0.4, 0.9, 0.4] }}
+          transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+        >
+          ↓
+        </motion.span>
       </div>
+    </div>
+  )
+}
+
+/* ========== Component Card with tooltip ========== */
+
+interface OsComponent {
+  id: string
+  icon: string
+  name: string
+  descriptionJa: string
+}
+
+function LayerCard({
+  c,
+  accentText,
+  compact = false,
+}: {
+  c: OsComponent
+  accentText: string
+  compact?: boolean
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <motion.div
+        whileHover={{ y: -2, scale: 1.02 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+        className={[
+          'rounded-xl border px-5 py-4 cursor-pointer transition-colors',
+          hovered
+            ? 'border-white/20 bg-white/[0.10]'
+            : 'border-white/[0.08] bg-white/[0.03]',
+          compact ? 'text-center' : '',
+        ].join(' ')}
+      >
+        <div className={['flex items-center gap-2.5', compact ? 'flex-col' : ''].join(' ')}>
+          <span className={`text-lg ${accentText}`} aria-hidden="true">{c.icon}</span>
+          <span className="text-sm font-semibold text-white font-heading">{c.name}</span>
+        </div>
+        {!compact && (
+          <p className="mt-2 text-xs text-slate-500 leading-relaxed">{c.descriptionJa}</p>
+        )}
+        {compact && (
+          <p className="mt-1 text-[10px] text-slate-500">{c.descriptionJa}</p>
+        )}
+      </motion.div>
+
+      {/* Hover tooltip for compact cards */}
+      {compact && (
+        <AnimatePresence>
+          {hovered && (
+            <motion.div
+              initial={{ opacity: 0, y: 6, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 4, scale: 0.96 }}
+              transition={{ duration: 0.18 }}
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 w-52 rounded-xl border border-white/20 bg-slate-800/95 backdrop-blur-md px-4 py-3 shadow-xl pointer-events-none"
+            >
+              <p className={`text-xs font-semibold mb-1 ${accentText}`}>{c.name}</p>
+              <p className="text-[11px] text-slate-300 leading-relaxed">{c.descriptionJa}</p>
+              {/* Arrow */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-slate-800/95" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   )
 }
@@ -71,7 +153,7 @@ export default function AiOs() {
           </p>
         </motion.div>
 
-        {/* Architecture diagram image (clickable → modal) */}
+        {/* Architecture diagram image */}
         <motion.div variants={item} className="mt-10">
           <button
             type="button"
@@ -84,16 +166,13 @@ export default function AiOs() {
               sizes="(max-width: 768px) 100vw, 80vw"
               className="w-full h-auto block"
             />
-            {/* Hover overlay */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
               <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium px-4 py-2 rounded-full">
                 クリックで拡大 ↗
               </span>
             </div>
           </button>
-          <p className="mt-2.5 text-center text-xs text-slate-600">
-            クリックで拡大表示
-          </p>
+          <p className="mt-2.5 text-center text-xs text-slate-600">クリックで拡大表示</p>
         </motion.div>
 
         {/* Interactive Architecture Diagram */}
@@ -103,23 +182,14 @@ export default function AiOs() {
             {/* Layer 1: Foundation */}
             <div className={`${layerStyles.foundation.bg} px-6 py-7`}>
               <div className="flex items-center gap-3 mb-5">
-                <span className="text-xs font-mono font-semibold text-brand-cyan tracking-widest uppercase">
+                <span className={`text-xs font-mono font-semibold tracking-widest uppercase ${layerStyles.foundation.accentText}`}>
                   Layer 1 — OS Foundation
                 </span>
                 <span className="text-xs text-slate-600 font-mono">{foundation.titleJa}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {foundation.components.map((c) => (
-                  <div
-                    key={c.id}
-                    className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-4 hover:bg-white/[0.06] transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-lg text-brand-cyan" aria-hidden="true">{c.icon}</span>
-                      <span className="text-sm font-semibold text-white font-heading">{c.name}</span>
-                    </div>
-                    <p className="mt-2 text-xs text-slate-500 leading-relaxed">{c.descriptionJa}</p>
-                  </div>
+                  <LayerCard key={c.id} c={c} accentText={layerStyles.foundation.accentText} />
                 ))}
               </div>
             </div>
@@ -129,23 +199,14 @@ export default function AiOs() {
             {/* Layer 2: Engine */}
             <div className={`${layerStyles.engine.bg} px-6 py-7`}>
               <div className="flex items-center gap-3 mb-5">
-                <span className="text-xs font-mono font-semibold text-brand-blue-bright tracking-widest uppercase">
+                <span className={`text-xs font-mono font-semibold tracking-widest uppercase ${layerStyles.engine.accentText}`}>
                   Layer 2 — Engine
                 </span>
                 <span className="text-xs text-slate-600 font-mono">{engine.titleJa}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {engine.components.map((c) => (
-                  <div
-                    key={c.id}
-                    className="rounded-xl border border-white/[0.10] bg-white/[0.04] px-5 py-4 hover:bg-white/[0.08] transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-lg text-brand-blue-bright" aria-hidden="true">{c.icon}</span>
-                      <span className="text-sm font-semibold text-white font-heading">{c.name}</span>
-                    </div>
-                    <p className="mt-2 text-xs text-slate-500 leading-relaxed">{c.descriptionJa}</p>
-                  </div>
+                  <LayerCard key={c.id} c={c} accentText={layerStyles.engine.accentText} />
                 ))}
               </div>
             </div>
@@ -155,21 +216,14 @@ export default function AiOs() {
             {/* Layer 3: Factory */}
             <div className={`${layerStyles.factory.bg} px-6 py-7`}>
               <div className="flex items-center gap-3 mb-5">
-                <span className="text-xs font-mono font-semibold text-white tracking-widest uppercase">
+                <span className={`text-xs font-mono font-semibold tracking-widest uppercase ${layerStyles.factory.accentText}`}>
                   Layer 3 — Factories
                 </span>
                 <span className="text-xs text-slate-600 font-mono">{factory.titleJa}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {factory.components.map((c) => (
-                  <div
-                    key={c.id}
-                    className="rounded-xl border border-white/[0.12] bg-white/[0.05] px-4 py-4 text-center hover:bg-white/[0.10] transition-colors"
-                  >
-                    <span className="text-xl text-white/70" aria-hidden="true">{c.icon}</span>
-                    <p className="mt-2 text-xs font-semibold text-white font-heading">{c.name}</p>
-                    <p className="mt-1 text-[10px] text-slate-500">{c.descriptionJa}</p>
-                  </div>
+                  <LayerCard key={c.id} c={c} accentText={layerStyles.factory.accentText} compact />
                 ))}
               </div>
             </div>
@@ -179,18 +233,20 @@ export default function AiOs() {
         {/* Feature highlights */}
         <motion.div variants={item} className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
           {[
-            { icon: '⇄', title: 'Multi-AI Routing',   body: 'GPT-4o / Claude / Gemini を用途に応じて自動選択。プロバイダー障害時も自動フォールバック。' },
-            { icon: '⚙', title: 'N-Step Workflow',    body: 'ステップを定義するだけで自律実行。Human Approval・条件分岐・並列実行を標準サポート。' },
-            { icon: '◉', title: 'Persistent Memory',  body: '実行履歴・コンテキストを記憶し、次の Workflow に活用。AIが賢くなり続ける基盤。' },
+            { icon: '⇄', title: 'Multi-AI Routing',  body: 'GPT-4o / Claude / Gemini を用途に応じて自動選択。プロバイダー障害時も自動フォールバック。' },
+            { icon: '⚙', title: 'N-Step Workflow',   body: 'ステップを定義するだけで自律実行。Human Approval・条件分岐・並列実行を標準サポート。' },
+            { icon: '◉', title: 'Persistent Memory', body: '実行履歴・コンテキストを記憶し、次の Workflow に活用。AIが賢くなり続ける基盤。' },
           ].map((f) => (
-            <div
+            <motion.div
               key={f.title}
-              className="rounded-xl border border-white/10 bg-white/[0.03] px-6 py-5 hover:bg-white/[0.06] transition-colors"
+              whileHover={{ y: -3, borderColor: 'rgba(255,255,255,0.2)' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="rounded-xl border border-white/10 bg-white/[0.03] px-6 py-5 cursor-default"
             >
               <span className="text-2xl text-brand-cyan" aria-hidden="true">{f.icon}</span>
               <h3 className="mt-3 text-base font-bold font-heading text-white">{f.title}</h3>
               <p className="mt-2 text-sm text-slate-500 leading-relaxed">{f.body}</p>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
       </motion.div>
