@@ -1,16 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import Link from 'next/link'
 import StatusBadge from '@/components/os/StatusBadge'
-import {
-  mockWorkflows, mockWorkflowRuns,
-  formatRelativeTime, formatDuration, formatTokens,
-} from '@/lib/mock'
+import { api } from '@/lib/api/runtime'
+import { formatRelativeTime, formatDuration, formatTokens } from '@/lib/mock'
 import type { Workflow, WorkflowRun, WorkflowStatus } from '@/types'
 
-/* ========== Step progress bar ========== */
+/* ======================================================================
+   Step progress bar
+   ====================================================================== */
 
 function StepBar({ steps }: { steps: WorkflowRun['steps'] }) {
   return (
@@ -25,10 +25,10 @@ function StepBar({ steps }: { steps: WorkflowRun['steps'] }) {
           style={{ originX: 0 }}
           className={[
             'h-1.5 flex-1 rounded-full',
-            step.status === 'done'    ? 'bg-emerald-500'    : '',
-            step.status === 'running' ? 'bg-brand-blue animate-pulse' : '',
-            step.status === 'error'   ? 'bg-red-500'        : '',
-            step.status === 'pending' ? 'bg-white/[0.08]'   : '',
+            step.status === 'done'    ? 'bg-emerald-500'             : '',
+            step.status === 'running' ? 'bg-brand-blue animate-pulse': '',
+            step.status === 'error'   ? 'bg-red-500'                 : '',
+            step.status === 'pending' ? 'bg-white/[0.08]'            : '',
           ].join(' ')}
         />
       ))}
@@ -36,7 +36,9 @@ function StepBar({ steps }: { steps: WorkflowRun['steps'] }) {
   )
 }
 
-/* ========== Run detail panel ========== */
+/* ======================================================================
+   Run detail slide panel
+   ====================================================================== */
 
 function RunDetail({ run, onClose }: { run: WorkflowRun; onClose: () => void }) {
   return (
@@ -62,7 +64,6 @@ function RunDetail({ run, onClose }: { run: WorkflowRun; onClose: () => void }) 
       </div>
 
       <div className="p-5 space-y-5">
-        {/* Status & model */}
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
             <p className="text-[10px] text-slate-600 mb-1">Status</p>
@@ -82,7 +83,6 @@ function RunDetail({ run, onClose }: { run: WorkflowRun; onClose: () => void }) 
           </div>
         </div>
 
-        {/* Input */}
         <div>
           <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-2">Input</p>
           <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-3">
@@ -90,7 +90,6 @@ function RunDetail({ run, onClose }: { run: WorkflowRun; onClose: () => void }) 
           </div>
         </div>
 
-        {/* Output */}
         {run.outputSummary && (
           <div>
             <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-2">Output</p>
@@ -100,7 +99,6 @@ function RunDetail({ run, onClose }: { run: WorkflowRun; onClose: () => void }) 
           </div>
         )}
 
-        {/* Steps */}
         <div>
           <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-2">
             Steps ({run.steps.filter(s => s.status === 'done').length}/{run.steps.length})
@@ -110,10 +108,10 @@ function RunDetail({ run, onClose }: { run: WorkflowRun; onClose: () => void }) 
               <div key={step.id} className="flex items-center gap-3">
                 <span className={[
                   'w-5 h-5 rounded-full text-[10px] flex items-center justify-center shrink-0 font-mono',
-                  step.status === 'done'    ? 'bg-emerald-500/20 text-emerald-400'         : '',
-                  step.status === 'running' ? 'bg-brand-blue/20 text-brand-blue-bright animate-pulse' : '',
-                  step.status === 'error'   ? 'bg-red-500/20 text-red-400'                 : '',
-                  step.status === 'pending' ? 'bg-white/[0.05] text-slate-600'             : '',
+                  step.status === 'done'    ? 'bg-emerald-500/20 text-emerald-400'                         : '',
+                  step.status === 'running' ? 'bg-brand-blue/20 text-brand-blue-bright animate-pulse'      : '',
+                  step.status === 'error'   ? 'bg-red-500/20 text-red-400'                                 : '',
+                  step.status === 'pending' ? 'bg-white/[0.05] text-slate-600'                             : '',
                 ].join(' ')}>
                   {step.status === 'done' ? '✓' : step.status === 'error' ? '✕' : step.status === 'running' ? '▶' : String(i + 1)}
                 </span>
@@ -132,11 +130,17 @@ function RunDetail({ run, onClose }: { run: WorkflowRun; onClose: () => void }) 
   )
 }
 
-/* ========== Workflow card ========== */
+/* ======================================================================
+   Workflow card
+   ====================================================================== */
 
-function WorkflowCard({ wf, onRun }: { wf: Workflow; onRun: (wf: Workflow) => void }) {
-  const latestRun = mockWorkflowRuns.find(r => r.workflowId === wf.id)
-
+function WorkflowCard({
+  wf, latestRun, onHistory,
+}: {
+  wf:        Workflow
+  latestRun?: WorkflowRun
+  onHistory:  (run: WorkflowRun) => void
+}) {
   return (
     <motion.div
       whileHover={{ y: -2 }}
@@ -154,7 +158,6 @@ function WorkflowCard({ wf, onRun }: { wf: Workflow; onRun: (wf: Workflow) => vo
         </div>
       </div>
 
-      {/* Stats row */}
       <div className="mt-4 flex items-center gap-4 text-[10px] font-mono text-slate-600">
         <span>{wf.stepCount} steps</span>
         <span>avg {formatDuration(wf.avgDurationMs)}</span>
@@ -164,10 +167,8 @@ function WorkflowCard({ wf, onRun }: { wf: Workflow; onRun: (wf: Workflow) => vo
         </span>
       </div>
 
-      {/* Last run steps */}
       {latestRun && <StepBar steps={latestRun.steps} />}
 
-      {/* Tags + actions */}
       <div className="mt-4 flex items-center justify-between gap-3">
         <div className="flex gap-1.5 flex-wrap">
           {wf.tags.map(tag => (
@@ -176,14 +177,14 @@ function WorkflowCard({ wf, onRun }: { wf: Workflow; onRun: (wf: Workflow) => vo
             </span>
           ))}
         </div>
-
         <div className="flex items-center gap-2 shrink-0">
           {wf.lastRunAt && (
             <span className="text-[10px] text-slate-600 font-mono">{formatRelativeTime(wf.lastRunAt)}</span>
           )}
           <button
-            onClick={() => onRun(wf)}
-            className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-white/[0.05] text-slate-400 border border-white/[0.08] hover:bg-white/[0.08] transition-colors"
+            onClick={() => { if (latestRun) onHistory(latestRun) }}
+            disabled={!latestRun}
+            className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-white/[0.05] text-slate-400 border border-white/[0.08] hover:bg-white/[0.08] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             History
           </button>
@@ -199,41 +200,84 @@ function WorkflowCard({ wf, onRun }: { wf: Workflow; onRun: (wf: Workflow) => vo
   )
 }
 
-/* ========== Status filter ========== */
+/* ======================================================================
+   Status filter
+   ====================================================================== */
 
-const filters: { label: string; value: WorkflowStatus | 'all' }[] = [
-  { label: 'All',       value: 'all'       },
-  { label: 'Running',   value: 'running'   },
-  { label: 'Paused',    value: 'paused'    },
-  { label: 'Idle',      value: 'idle'      },
-  { label: 'Queued',    value: 'queued'    },
+const STATUS_FILTERS: { label: string; value: WorkflowStatus | 'all' }[] = [
+  { label: 'All',     value: 'all'     },
+  { label: 'Running', value: 'running' },
+  { label: 'Paused',  value: 'paused'  },
+  { label: 'Idle',    value: 'idle'    },
+  { label: 'Queued',  value: 'queued'  },
 ]
 
-/* ========== Page ========== */
+/* ======================================================================
+   Page
+   ====================================================================== */
 
 export default function WorkflowsPage() {
-  const [filter, setFilter]   = useState<WorkflowStatus | 'all'>('all')
-  const [search, setSearch]   = useState('')
-  const [selectedRun, setSelectedRun] = useState<WorkflowRun | null>(null)
+  const [workflows,    setWorkflows]    = useState<Workflow[]>([])
+  const [runs,         setRuns]         = useState<WorkflowRun[]>([])
+  const [isLoading,    setIsLoading]    = useState(true)
+  const [error,        setError]        = useState<string | null>(null)
+  const [filter,       setFilter]       = useState<WorkflowStatus | 'all'>('all')
+  const [search,       setSearch]       = useState('')
+  const [selectedRun,  setSelectedRun]  = useState<WorkflowRun | null>(null)
 
-  const filtered = mockWorkflows.filter(wf => {
+  // Initial data load via api runtime
+  useEffect(() => {
+    const tid = setTimeout(() => {
+      setIsLoading(true)
+      void Promise.all([
+        api.getWorkflows(),
+        api.getWorkflowRuns({ limit: 50 }),
+      ]).then(([wfRes, runsRes]) => {
+        if (wfRes.ok)   setWorkflows(wfRes.data)
+        else            setError(wfRes.error)
+        if (runsRes.ok) setRuns(runsRes.data)
+        setIsLoading(false)
+      }).catch(e => {
+        setError(e instanceof Error ? e.message : String(e))
+        setIsLoading(false)
+      })
+    }, 0)
+    return () => clearTimeout(tid)
+  }, [])
+
+  // Client-side filter
+  const filtered = workflows.filter(wf => {
     const matchStatus = filter === 'all' || wf.status === filter
     const matchSearch = wf.nameJa.includes(search) || wf.name.toLowerCase().includes(search.toLowerCase())
     return matchStatus && matchSearch
   })
 
-  function handleRun(wf: Workflow) {
-    // Simulate: find latest run and show it
-    const run = mockWorkflowRuns.find(r => r.workflowId === wf.id)
-    if (run) setSelectedRun(run)
-  }
-
   return (
     <div className="space-y-5 max-w-6xl">
+      {/* Loading flash bar */}
+      {isLoading && (
+        <div className="fixed top-14 left-16 lg:left-56 right-0 h-[2px] z-50 overflow-hidden">
+          <motion.div
+            className="h-full bg-gradient-to-r from-brand-blue to-brand-cyan"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
+          />
+        </div>
+      )}
+
       <div>
         <h1 className="text-xl font-bold font-heading text-white">Workflows</h1>
-        <p className="text-xs text-slate-600 mt-0.5">{mockWorkflows.length} 件のワークフロー</p>
+        <p className="text-xs text-slate-600 mt-0.5">
+          {workflows.length > 0 ? `${workflows.length} 件のワークフロー` : isLoading ? '読み込み中…' : '0 件'}
+        </p>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-xs text-red-400 font-mono">
+          {error}
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -244,8 +288,8 @@ export default function WorkflowsPage() {
           placeholder="ワークフローを検索…"
           className="w-full sm:w-64 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-slate-300 placeholder:text-slate-600 focus:border-brand-cyan/40 focus:outline-none focus:ring-1 focus:ring-brand-cyan/20"
         />
-        <div className="flex gap-1.5">
-          {filters.map(f => (
+        <div className="flex gap-1.5 flex-wrap">
+          {STATUS_FILTERS.map(f => (
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
@@ -262,48 +306,57 @@ export default function WorkflowsPage() {
         </div>
       </div>
 
-      {/* History panel header */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Workflow list */}
         <div className="lg:col-span-2 space-y-3">
-          {filtered.map(wf => (
-            <WorkflowCard
-              key={wf.id}
-              wf={wf}
-              onRun={handleRun}
-            />
-          ))}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && !isLoading ? (
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-10 text-center">
-              <p className="text-slate-600 text-sm">一致するワークフローが見つかりませんでした</p>
+              <p className="text-slate-600 text-sm">
+                {workflows.length === 0 ? 'ワークフローが見つかりません' : '一致するワークフローが見つかりませんでした'}
+              </p>
             </div>
+          ) : (
+            filtered.map(wf => (
+              <WorkflowCard
+                key={wf.id}
+                wf={wf}
+                latestRun={runs.find(r => r.workflowId === wf.id)}
+                onHistory={setSelectedRun}
+              />
+            ))
           )}
         </div>
 
-        {/* Run history */}
+        {/* Run history panel */}
         <div className="space-y-3">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Run History</h2>
-          <div className="space-y-2">
-            {mockWorkflowRuns.map(run => (
-              <button
-                key={run.id}
-                onClick={() => setSelectedRun(run)}
-                className={[
-                  'w-full text-left rounded-xl border px-4 py-3 transition-colors',
-                  selectedRun?.id === run.id
-                    ? 'border-brand-cyan/30 bg-brand-cyan/5'
-                    : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]',
-                ].join(' ')}
-              >
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <StatusBadge status={run.status} />
-                  <span className="text-[10px] text-slate-600 font-mono">{formatRelativeTime(run.startedAt)}</span>
-                </div>
-                <p className="text-xs text-slate-300 truncate">{run.workflowName}</p>
-                <p className="text-[10px] text-slate-600 truncate mt-0.5">{run.inputSummary}</p>
-              </button>
-            ))}
-          </div>
+          {runs.length === 0 && !isLoading ? (
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 text-center">
+              <p className="text-slate-600 text-xs">実行履歴がありません</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {runs.map(run => (
+                <button
+                  key={run.id}
+                  onClick={() => setSelectedRun(run)}
+                  className={[
+                    'w-full text-left rounded-xl border px-4 py-3 transition-colors',
+                    selectedRun?.id === run.id
+                      ? 'border-brand-cyan/30 bg-brand-cyan/5'
+                      : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]',
+                  ].join(' ')}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <StatusBadge status={run.status} />
+                    <span className="text-[10px] text-slate-600 font-mono">{formatRelativeTime(run.startedAt)}</span>
+                  </div>
+                  <p className="text-xs text-slate-300 truncate">{run.workflowName}</p>
+                  <p className="text-[10px] text-slate-600 truncate mt-0.5">{run.inputSummary}</p>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

@@ -1,18 +1,27 @@
 'use client'
 
 /**
- * useWorkflowEngine — Mock implementation of the Workflow execution engine.
+ * useWorkflowEngine — Workflow execution engine with runtime API boundary.
  *
- * API CONTRACT (replace each section when integrating real backend):
- *   run()    → POST /api/workflows/{id}/runs
- *   pause()  → POST /api/runs/{runId}/pause
- *   resume() → POST /api/runs/{runId}/resume
- *   stop()   → POST /api/runs/{runId}/stop
- *   State    → WebSocket/SSE ws://…/runs/{runId}/stream
- *              OR polling GET /api/runs/{runId} every N seconds
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  RUNTIME LAYER  — routes through api (lib/api/runtime.ts)               │
+ * │    run()     → api.startRun(workflowId, { inputs })                     │
+ * │    pause()   → api.pauseRun(runId)                                      │
+ * │    resume()  → api.resumeRun(runId)                                     │
+ * │    stop()    → api.stopRun(runId)                                       │
+ * │                                                                         │
+ * │  SIMULATION LAYER  — replace with WebSocket/SSE in production           │
+ * │    Step advancement via setTimeout (mirrors real async step execution)  │
+ * │    Output generation via getMockOutput() (replace with real output)     │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *
+ * To switch to a real backend:
+ *   1. Change lib/api/runtime.ts to use restAdapter
+ *   2. Replace the two simulation useEffects with a WebSocket/SSE subscription
  */
 
 import { useReducer, useEffect } from 'react'
+import { api } from '@/lib/api/runtime'
 import type { WorkflowStep, WorkflowStatus } from '@/types'
 import { mockWorkflowSteps, getMockOutput } from '@/lib/mock'
 
@@ -29,25 +38,15 @@ export type LogEntry = {
 }
 
 export type EngineState = {
-  /** Execution status — mirrors WorkflowStatus */
   status:     WorkflowStatus
-  /** Live step list with current statuses */
   steps:      WorkflowStep[]
-  /** 0–100 */
   progress:   number
-  /** Append-only execution log */
   logs:       LogEntry[]
-  /** ISO timestamp of run start */
   startedAt:  string | null
-  /** ISO timestamp of run end (complete/failed) */
   endedAt:    string | null
-  /** Cumulative mock token count */
   tokensUsed: number
-  /** Input values submitted by user */
   inputs:     Record<string, string>
-  /** Final output (available when status === 'completed') */
   output:     string | null
-  /** Unique run identifier */
   runId:      string | null
 }
 
@@ -56,7 +55,7 @@ export type EngineState = {
    ====================================================================== */
 
 type Action =
-  | { type: 'RUN';           steps: WorkflowStep[]; inputs: Record<string, string> }
+  | { type: 'RUN';           steps: WorkflowStep[]; inputs: Record<string, string>; runId: string }
   | { type: 'STEP_COMPLETE'; idx: number; durationMs: number; total: number }
   | { type: 'COMPLETE';      output: string }
   | { type: 'PAUSE'  }
@@ -144,9 +143,9 @@ function reducer(state: EngineState, action: Action): EngineState {
         endedAt:    null,
         tokensUsed: 0,
         output:     null,
-        runId:      `run-${Date.now()}`,
+        runId:      action.runId,          // assigned by api.startRun()
         logs: [
-          mkLog('info', `▶ Workflow run started`),
+          mkLog('info', `▶ Workflow run started [${action.runId}]`),
           mkLog('info', `[1/${steps.length}] ${steps[0].name}`),
         ],
       }
@@ -224,8 +223,10 @@ export function useWorkflowEngine(workflowId: string) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
 
   /* ------------------------------------------------------------------
-     Step advancement simulation
-     Replace this useEffect with WebSocket/SSE subscription or polling.
+     SIMULATION: step advancement
+     Replace this useEffect with WebSocket/SSE subscription or polling:
+       ws.on('step_complete', e => dispatch({ type: 'STEP_COMPLETE', ...e }))
+       OR: setInterval(() => api.getRun(runId).then(r => syncState(r)), 2000)
   ------------------------------------------------------------------ */
   useEffect(() => {
     if (state.status !== 'running') return
@@ -234,26 +235,23 @@ export function useWorkflowEngine(workflowId: string) {
     if (runningIdx === -1) return
 
     const step = state.steps[runningIdx]
-    // Demo speed: 1/8 of real duration, clamped to [700ms, 2200ms]
     const demoMs = Math.min(2200, Math.max(700, (step.durationMs ?? 3000) / 8))
-    const isLast = runningIdx === state.steps.length - 1
 
     const timer = setTimeout(() => {
-      dispatch({ type: 'STEP_COMPLETE', idx: runningIdx, durationMs: step.durationMs ?? demoMs * 8, total: state.steps.length })
-      if (isLast) {
-        // Let the state update propagate before dispatching COMPLETE
-        // Replace with: await api.getRunResult(runId)
-        setTimeout(() => {
-          // inputs are in state.inputs, captured via closure at timer creation — pass via ref in real impl
-        }, 150)
-      }
+      dispatch({
+        type:       'STEP_COMPLETE',
+        idx:        runningIdx,
+        durationMs: step.durationMs ?? demoMs * 8,
+        total:      state.steps.length,
+      })
     }, demoMs)
 
     return () => clearTimeout(timer)
   }, [state.status, state.steps])
 
   /* ------------------------------------------------------------------
-     Detect all-steps-done → emit COMPLETE
+     SIMULATION: all-steps-done → emit COMPLETE
+     In production: WebSocket 'run_complete' event OR final poll result.
   ------------------------------------------------------------------ */
   useEffect(() => {
     if (state.status !== 'running') return
@@ -268,11 +266,13 @@ export function useWorkflowEngine(workflowId: string) {
   }, [state.status, state.steps, workflowId, state.inputs])
 
   /* ------------------------------------------------------------------
-     Public API — mirrors real Workflow Engine API surface
+     Public API — mirrors REST Workflow Engine surface
+     Each function calls the api runtime, then updates local state.
+     Swap lib/api/runtime.ts adapter to point at REST backend.
   ------------------------------------------------------------------ */
 
-  function run(inputs: Record<string, string>) {
-    // Real: POST /api/workflows/{workflowId}/runs  { inputs }
+  async function run(inputs: Record<string, string>) {
+    // Build local step list from simulation layer
     const template = mockWorkflowSteps[workflowId] ?? []
     const steps: WorkflowStep[] = template.map((t, i) => ({
       id:         `s${i + 1}`,
@@ -280,21 +280,29 @@ export function useWorkflowEngine(workflowId: string) {
       status:     'pending',
       durationMs: t.durationMs,
     }))
-    dispatch({ type: 'RUN', steps, inputs })
+
+    // RUNTIME: create run on backend → get server-assigned runId
+    const res = await api.startRun(workflowId, { inputs })
+    const runId = res.ok ? res.data.runId : `run-local-${Date.now()}`
+
+    dispatch({ type: 'RUN', steps, inputs, runId })
   }
 
-  function pause() {
-    // Real: POST /api/runs/{runId}/pause
+  async function pause() {
+    // RUNTIME: pause on backend, then update local state
+    if (state.runId) await api.pauseRun(state.runId)
     dispatch({ type: 'PAUSE' })
   }
 
-  function resume() {
-    // Real: POST /api/runs/{runId}/resume
+  async function resume() {
+    // RUNTIME: resume on backend, then update local state
+    if (state.runId) await api.resumeRun(state.runId)
     dispatch({ type: 'RESUME' })
   }
 
-  function stop() {
-    // Real: POST /api/runs/{runId}/stop
+  async function stop() {
+    // RUNTIME: stop on backend, then update local state
+    if (state.runId) await api.stopRun(state.runId)
     dispatch({ type: 'STOP' })
   }
 
