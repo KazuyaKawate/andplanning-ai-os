@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { motion } from 'motion/react'
 import SmartImage from '@/components/ui/SmartImage'
+import GradientText from '@/components/ui/GradientText'
 import { navItems, siteConfig, socialLinks, legalLinks } from '@/data/site'
 import { logoImages } from '@/config/images'
 
@@ -39,50 +41,91 @@ export default function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="bg-brand-navy text-brand-gray-400">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 lg:gap-12">
+    <footer className="relative bg-[#060C18] text-brand-gray-400 overflow-hidden">
+      {/* Gradient top border */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{
+          background: 'linear-gradient(to right, transparent 0%, rgba(37,99,235,0.6) 30%, rgba(6,182,212,0.8) 50%, rgba(37,99,235,0.6) 70%, transparent 100%)',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Ambient glow behind content */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at center top, rgba(37,99,235,0.06) 0%, transparent 70%)',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Subtle dot pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.015] pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
+        }}
+        aria-hidden="true"
+      />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10 lg:pt-20 lg:pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 lg:gap-14">
 
           {/* Brand */}
           <div className="md:col-span-2">
-            {/* Logo symbol */}
-            <div className="flex items-center gap-3 mb-4">
-              <SmartImage
-                image={logoImages.symbol}
-                sizes="48px"
-                className="h-10 w-10 rounded-lg"
-              />
+            <div className="flex items-center gap-3 mb-5">
+              <div className="relative">
+                <div
+                  className="absolute -inset-1 rounded-xl blur-sm opacity-40"
+                  style={{ background: 'radial-gradient(ellipse, rgba(6,182,212,0.5), transparent)' }}
+                  aria-hidden="true"
+                />
+                <SmartImage
+                  image={logoImages.symbol}
+                  sizes="48px"
+                  className="relative h-10 w-10 rounded-lg"
+                />
+              </div>
               <div>
-                <p className="text-base font-bold font-heading text-white tracking-tight">
-                  {siteConfig.name}
+                <p className="text-base font-bold font-heading tracking-tight">
+                  <GradientText>{siteConfig.name}</GradientText>
                 </p>
-                <p className="text-xs text-brand-gray-600">AI Operating System</p>
+                <p className="text-xs text-slate-600 mt-0.5">AI Operating System</p>
               </div>
             </div>
-            <p className="text-sm text-brand-gray-400 leading-relaxed max-w-xs">
+
+            <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
               {siteConfig.taglineJa}
             </p>
 
+            <p className="mt-3 text-xs text-slate-600 italic leading-relaxed max-w-xs">
+              &ldquo;{siteConfig.tagline}&rdquo;
+            </p>
+
             {/* Social icons */}
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-7 flex items-center gap-2.5">
               {socialLinks.map((social) => (
-                <a
+                <motion.a
                   key={social.id}
                   href={social.href}
                   target={social.external ? '_blank' : undefined}
                   rel={social.external ? 'noopener noreferrer' : undefined}
                   aria-label={social.label}
-                  className="w-9 h-9 rounded-lg bg-brand-navy-light hover:bg-white/10 flex items-center justify-center text-brand-gray-400 hover:text-white transition-colors"
+                  whileHover={{ y: -2, scale: 1.1 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                  className="w-9 h-9 rounded-lg border border-white/[0.06] bg-white/[0.04] hover:bg-white/[0.10] hover:border-white/[0.15] flex items-center justify-center text-slate-500 hover:text-white transition-colors"
                 >
                   <SocialIconComponent icon={social.icon} />
-                </a>
+                </motion.a>
               ))}
             </div>
           </div>
 
           {/* Navigation */}
           <div>
-            <p className="text-xs font-semibold text-slate-300 uppercase tracking-widest mb-5">
+            <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.2em] mb-5">
               Navigation
             </p>
             <ul className="space-y-3">
@@ -90,7 +133,7 @@ export default function Footer() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="text-sm text-brand-gray-400 hover:text-white transition-colors"
+                    className="text-sm text-slate-500 hover:text-white transition-colors duration-200"
                   >
                     {item.label}
                   </Link>
@@ -101,14 +144,14 @@ export default function Footer() {
 
           {/* Contact + Legal */}
           <div>
-            <p className="text-xs font-semibold text-slate-300 uppercase tracking-widest mb-5">
+            <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.2em] mb-5">
               Contact
             </p>
             <ul className="space-y-3">
               <li>
                 <a
                   href={`mailto:${siteConfig.email}`}
-                  className="text-sm text-brand-gray-400 hover:text-white transition-colors break-all"
+                  className="text-sm text-slate-500 hover:text-white transition-colors duration-200 break-all"
                 >
                   {siteConfig.email}
                 </a>
@@ -118,7 +161,7 @@ export default function Footer() {
                   href={siteConfig.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-brand-gray-400 hover:text-white transition-colors"
+                  className="text-sm text-slate-500 hover:text-white transition-colors duration-200"
                 >
                   GitHub
                 </a>
@@ -128,21 +171,20 @@ export default function Footer() {
                   href="https://note.com/andplanning"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-brand-gray-400 hover:text-white transition-colors"
+                  className="text-sm text-slate-500 hover:text-white transition-colors duration-200"
                 >
                   note
                 </a>
               </li>
             </ul>
 
-            {/* Legal links */}
             <div className="mt-8">
               <ul className="space-y-2.5">
                 {legalLinks.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-xs text-brand-gray-600 hover:text-brand-gray-400 transition-colors"
+                      className="text-xs text-slate-700 hover:text-slate-400 transition-colors duration-200"
                     >
                       {link.label}
                     </Link>
@@ -154,11 +196,20 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-14 pt-8 border-t border-brand-navy-light flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-brand-gray-600">
+        <div className="mt-14 pt-7 flex flex-col sm:flex-row items-center justify-between gap-4"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        >
+          <p className="text-xs text-slate-700">
             © {year} {siteConfig.name}. All rights reserved.
           </p>
-          <p className="text-xs font-mono text-brand-gray-600">
+          <p className="text-xs font-mono"
+            style={{
+              background: 'linear-gradient(to right, #2563EB, #06B6D4)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
             Build Your AI Factory. Operate Your Future.
           </p>
         </div>
