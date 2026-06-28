@@ -4,6 +4,7 @@ import AiOs      from '@/sections/AiOs'
 import Factories from '@/sections/Factories'
 import Roadmap   from '@/sections/Roadmap'
 import News      from '@/sections/News'
+import Contact   from '@/sections/Contact'
 
 export default function HomePage() {
   return (
@@ -14,6 +15,7 @@ export default function HomePage() {
       <Factories />
       <Roadmap />
       <News />
+      <Contact />
     </>
   )
 }
