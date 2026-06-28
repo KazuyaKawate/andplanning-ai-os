@@ -78,7 +78,7 @@ export default function Roadmap() {
           />
 
           <ol className="space-y-5">
-            {roadmapItems.map((roadmapItem, idx) => (
+            {roadmapItems.map((roadmapItem) => (
               <motion.li
                 key={`${roadmapItem.date}-${roadmapItem.title}`}
                 variants={item}

@@ -77,6 +77,22 @@
   }
 }
 
+/* ===== Performance ===== */
+@layer base {
+  /* Contain paint to reduce reflow scope */
+  section {
+    contain: layout style;
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
 /* ===== Keyframes ===== */
 @keyframes fade-in {
   from { opacity: 0; }
