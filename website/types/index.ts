@@ -52,3 +52,16 @@ export type NewsItem = {
   category: string
   href: string
 }
+
+export type SocialLink = {
+  id:       string
+  label:    string
+  href:     string
+  icon:     'github' | 'x' | 'note' | 'email'
+  external: boolean
+}
+
+export type LegalLink = {
+  label: string
+  href:  string
+}

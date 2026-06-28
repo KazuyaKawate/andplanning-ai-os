@@ -1,4 +1,4 @@
-import type { NavItem, Factory, Phase, NewsItem, OsLayer, RoadmapItem } from '@/types'
+import type { NavItem, Factory, Phase, NewsItem, OsLayer, RoadmapItem, SocialLink, LegalLink } from '@/types'
 
 export const siteConfig = {
   name: 'And Planning',
@@ -224,6 +224,18 @@ export const phases: Phase[] = [
     status: 'planned',
     percentage: 0,
   },
+]
+
+export const socialLinks: SocialLink[] = [
+  { id: 'github', label: 'GitHub', href: 'https://github.com/andplanning',    icon: 'github', external: true },
+  { id: 'x',     label: 'X',      href: 'https://x.com/andplanning',          icon: 'x',      external: true },
+  { id: 'note',  label: 'note',   href: 'https://note.com/andplanning',       icon: 'note',   external: true },
+  { id: 'email', label: 'Email',  href: `mailto:hello@andplanning.ai`,        icon: 'email',  external: false },
+]
+
+export const legalLinks: LegalLink[] = [
+  { label: '利用規約',           href: '/terms'   },
+  { label: 'プライバシーポリシー', href: '/privacy' },
 ]
 
 export const newsItems: NewsItem[] = [

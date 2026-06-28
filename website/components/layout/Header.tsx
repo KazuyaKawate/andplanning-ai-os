@@ -3,10 +3,12 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import SmartImage from '@/components/ui/SmartImage'
 import { navItems, siteConfig } from '@/data/site'
+import { logoImages } from '@/config/images'
 
 export default function Header() {
-  const [isScrolled, setIsScrolled]         = useState(false)
+  const [isScrolled, setIsScrolled]          = useState(false)
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -29,12 +31,18 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
 
-          {/* Logo */}
+          {/* Logo image → TOP */}
           <Link
             href="/"
-            className="text-lg font-bold font-heading tracking-tight text-slate-900 hover:text-brand-blue transition-colors"
+            className="flex items-center hover:opacity-80 transition-opacity"
+            aria-label={`${siteConfig.name} — トップへ`}
           >
-            {siteConfig.name}
+            <SmartImage
+              image={logoImages.horizontal}
+              priority
+              sizes="(max-width: 768px) 120px, 180px"
+              className="h-8 w-auto"
+            />
           </Link>
 
           {/* Desktop navigation */}
@@ -67,8 +75,8 @@ export default function Header() {
             aria-label={isMobileMenuOpen ? 'メニューを閉じる' : 'メニューを開く'}
             aria-expanded={isMobileMenuOpen}
           >
-            <span className="block w-5 h-0.5 bg-current mb-1.5 transition-transform duration-200" style={{ transform: isMobileMenuOpen ? 'translateY(8px) rotate(45deg)' : undefined }} />
-            <span className="block w-5 h-0.5 bg-current mb-1.5 transition-opacity duration-200"  style={{ opacity: isMobileMenuOpen ? 0 : 1 }} />
+            <span className="block w-5 h-0.5 bg-current mb-1.5 transition-transform duration-200" style={{ transform: isMobileMenuOpen ? 'translateY(8px) rotate(45deg)'  : undefined }} />
+            <span className="block w-5 h-0.5 bg-current mb-1.5 transition-opacity duration-200"  style={{ opacity:    isMobileMenuOpen ? 0 : 1 }} />
             <span className="block w-5 h-0.5 bg-current transition-transform duration-200"        style={{ transform: isMobileMenuOpen ? 'translateY(-8px) rotate(-45deg)' : undefined }} />
           </button>
         </div>

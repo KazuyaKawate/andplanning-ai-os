@@ -1,10 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'motion/react'
 import SectionWrapper from '@/components/ui/SectionWrapper'
 import Badge from '@/components/ui/Badge'
-import PlaceholderImage from '@/components/ui/PlaceholderImage'
+import SmartImage from '@/components/ui/SmartImage'
+import ImageModal from '@/components/ui/ImageModal'
 import { osLayers } from '@/data/site'
+import { sectionImages } from '@/config/images'
 
 /* ========== Animation ========== */
 
@@ -19,10 +22,10 @@ const item = {
 
 /* ========== Layer Colors ========== */
 
-const layerStyles: Record<string, { bg: string; border: string; label: string }> = {
-  foundation: { bg: 'bg-brand-deep-navy',  border: 'border-white/[0.08]', label: 'text-brand-cyan'       },
-  engine:     { bg: 'bg-brand-navy',        border: 'border-white/[0.10]', label: 'text-brand-blue-bright' },
-  factory:    { bg: 'bg-brand-navy-light',  border: 'border-white/[0.12]', label: 'text-white'             },
+const layerStyles: Record<string, { bg: string }> = {
+  foundation: { bg: 'bg-brand-deep-navy'  },
+  engine:     { bg: 'bg-brand-navy'       },
+  factory:    { bg: 'bg-brand-navy-light' },
 }
 
 /* ========== Sub-components ========== */
@@ -42,6 +45,7 @@ function ConnectorArrow() {
 
 export default function AiOs() {
   const [foundation, engine, factory] = osLayers
+  const [modalOpen, setModalOpen] = useState(false)
 
   return (
     <SectionWrapper id="ai-os" background="dark">
@@ -54,10 +58,7 @@ export default function AiOs() {
       >
         {/* Header */}
         <motion.div variants={item} className="text-center">
-          <Badge
-            variant="default"
-            className="border-white/20 bg-white/5 text-brand-cyan-glow"
-          >
+          <Badge variant="default" className="border-white/20 bg-white/5 text-brand-cyan-glow">
             System Architecture
           </Badge>
           <h2 className="mt-6 text-4xl lg:text-5xl font-bold font-heading text-white tracking-tight">
@@ -70,18 +71,29 @@ export default function AiOs() {
           </p>
         </motion.div>
 
-        {/* System overview image */}
+        {/* Architecture diagram image (clickable → modal) */}
         <motion.div variants={item} className="mt-10">
-          <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
-            <PlaceholderImage
-              src="/images/ai-os-diagram.svg"
-              alt="And Planning AI OS 3層アーキテクチャ図解 — OS Foundation / Engine / Factory Layer"
-              width={800}
-              height={360}
-              className="w-full h-auto"
-              fallbackBg="#0F172A"
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="group relative w-full rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan"
+            aria-label="アーキテクチャ図を拡大表示する"
+          >
+            <SmartImage
+              image={sectionImages.aiOsDiagram}
+              sizes="(max-width: 768px) 100vw, 80vw"
+              className="w-full h-auto block"
             />
-          </div>
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium px-4 py-2 rounded-full">
+                クリックで拡大 ↗
+              </span>
+            </div>
+          </button>
+          <p className="mt-2.5 text-center text-xs text-slate-600">
+            クリックで拡大表示
+          </p>
         </motion.div>
 
         {/* Interactive Architecture Diagram */}
@@ -167,21 +179,9 @@ export default function AiOs() {
         {/* Feature highlights */}
         <motion.div variants={item} className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
           {[
-            {
-              icon: '⇄',
-              title: 'Multi-AI Routing',
-              body: 'GPT-4o / Claude / Gemini を用途に応じて自動選択。プロバイダー障害時も自動フォールバック。',
-            },
-            {
-              icon: '⚙',
-              title: 'N-Step Workflow',
-              body: 'ステップを定義するだけで自律実行。Human Approval・条件分岐・並列実行を標準サポート。',
-            },
-            {
-              icon: '◉',
-              title: 'Persistent Memory',
-              body: '実行履歴・コンテキストを記憶し、次の Workflow に活用。AIが賢くなり続ける基盤。',
-            },
+            { icon: '⇄', title: 'Multi-AI Routing',   body: 'GPT-4o / Claude / Gemini を用途に応じて自動選択。プロバイダー障害時も自動フォールバック。' },
+            { icon: '⚙', title: 'N-Step Workflow',    body: 'ステップを定義するだけで自律実行。Human Approval・条件分岐・並列実行を標準サポート。' },
+            { icon: '◉', title: 'Persistent Memory',  body: '実行履歴・コンテキストを記憶し、次の Workflow に活用。AIが賢くなり続ける基盤。' },
           ].map((f) => (
             <div
               key={f.title}
@@ -194,6 +194,13 @@ export default function AiOs() {
           ))}
         </motion.div>
       </motion.div>
+
+      {/* Modal */}
+      <ImageModal
+        image={sectionImages.aiOsDiagram}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </SectionWrapper>
   )
 }

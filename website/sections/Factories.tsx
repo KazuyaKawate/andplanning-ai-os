@@ -3,8 +3,9 @@
 import { motion } from 'motion/react'
 import SectionWrapper from '@/components/ui/SectionWrapper'
 import Badge from '@/components/ui/Badge'
-import PlaceholderImage from '@/components/ui/PlaceholderImage'
+import SmartImage from '@/components/ui/SmartImage'
 import { factories } from '@/data/site'
+import { factoryImages } from '@/config/images'
 import type { Factory } from '@/types'
 
 /* ========== Animation ========== */
@@ -35,29 +36,30 @@ const statusLabelMap: Record<Factory['status'], string> = {
 /* ========== FactoryCard ========== */
 
 function FactoryCard({ factory }: { factory: Factory }) {
-  const isActive = factory.status === 'active'
+  const isActive     = factory.status === 'active'
+  const factoryImage = factoryImages[factory.id as keyof typeof factoryImages]
 
   return (
     <motion.article
       variants={item}
-      className="group relative flex flex-col rounded-2xl border border-slate-100 bg-white overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+      className="group relative flex flex-col rounded-2xl border border-slate-100 bg-white overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-slate-200/80 hover:border-slate-200"
     >
-      {/* Factory image area */}
-      <div className="relative overflow-hidden shrink-0" style={{ height: '160px' }}>
-        <PlaceholderImage
-          src={`/images/${factory.id}-factory.svg`}
-          alt={`${factory.name} — ${factory.nameJa} のビジュアル`}
-          width={400}
-          height={220}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          fallbackBg={factory.accentColor}
-        />
-        {/* Gradient overlay for text legibility */}
+      {/* Factory image area (fill モード + ホバー拡大) */}
+      <div className="relative h-40 shrink-0 overflow-hidden bg-slate-100">
+        {factoryImage && (
+          <SmartImage
+            image={factoryImage}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        )}
+        {/* Gradient overlay */}
         <div
           className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"
           aria-hidden="true"
         />
-        {/* Status badge on image */}
+        {/* Status badge */}
         <div className="absolute top-3 right-3">
           <Badge variant={statusVariantMap[factory.status]}>
             {statusLabelMap[factory.status]}
@@ -65,11 +67,12 @@ function FactoryCard({ factory }: { factory: Factory }) {
         </div>
       </div>
 
+      {/* Content */}
       <div className="flex flex-col flex-1 p-7">
         {/* Icon + Title */}
         <div className="flex items-center gap-3">
           <span
-            className="text-3xl leading-none"
+            className="text-3xl leading-none transition-transform duration-300 group-hover:scale-110"
             style={{ color: factory.accentColor }}
             aria-hidden="true"
           >
@@ -95,7 +98,7 @@ function FactoryCard({ factory }: { factory: Factory }) {
             {factory.features.map((f) => (
               <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
                 <span
-                  className="mt-0.5 w-1 h-1 rounded-full shrink-0 mt-1.5"
+                  className="w-1 h-1 rounded-full shrink-0 mt-1.5"
                   style={{ backgroundColor: factory.accentColor }}
                   aria-hidden="true"
                 />
@@ -107,7 +110,7 @@ function FactoryCard({ factory }: { factory: Factory }) {
 
         {/* Release label */}
         <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between">
-          <span className="text-xs text-slate-400">β公開予定</span>
+          <span className="text-xs text-slate-400">β 公開予定</span>
           <span
             className="text-sm font-bold font-mono"
             style={{ color: isActive ? '#2563EB' : '#94A3B8' }}

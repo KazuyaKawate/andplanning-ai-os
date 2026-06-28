@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { motion } from 'motion/react'
 import SectionWrapper from '@/components/ui/SectionWrapper'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import SmartImage from '@/components/ui/SmartImage'
 import { siteConfig } from '@/data/site'
+import { logoImages } from '@/config/images'
 
 /* ========== Animation ========== */
 
@@ -178,12 +179,10 @@ export default function Contact() {
         <motion.div variants={item} className="text-center">
           {/* Brand logo */}
           <div className="flex justify-center mb-6">
-            <Image
-              src="/logos/main-logo.svg"
-              alt="And Planning ブランドロゴ"
-              width={180}
-              height={36}
+            <SmartImage
+              image={logoImages.horizontal}
               className="h-9 w-auto"
+              sizes="180px"
             />
           </div>
           <Badge variant="default">Contact</Badge>
