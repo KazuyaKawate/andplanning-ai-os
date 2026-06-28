@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Noto_Sans_JP, JetBrains_Mono } from 'next/font/google'
 import '@/styles/globals.css'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
+import ConditionalShell from '@/components/layout/ConditionalShell'
 import { siteConfig } from '@/data/site'
 
 /* ========== Fonts ========== */
@@ -110,9 +109,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-white text-slate-900 antialiased">
-        <Header />
-        <main>{children}</main>
-        <Footer />
+        <ConditionalShell>{children}</ConditionalShell>
       </body>
     </html>
   )
