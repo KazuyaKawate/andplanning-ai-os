@@ -63,6 +63,32 @@ export const metadata: Metadata = {
   },
 }
 
+/* ========== Structured Data ========== */
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${siteConfig.url}/#organization`,
+      name: siteConfig.name,
+      url: siteConfig.url,
+      email: siteConfig.email,
+      description: siteConfig.description,
+      sameAs: [siteConfig.github],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${siteConfig.url}/#website`,
+      url: siteConfig.url,
+      name: siteConfig.name,
+      description: siteConfig.description,
+      publisher: { '@id': `${siteConfig.url}/#organization` },
+      inLanguage: 'ja',
+    },
+  ],
+}
+
 /* ========== Layout ========== */
 
 export default function RootLayout({
@@ -77,6 +103,12 @@ export default function RootLayout({
         jetbrainsMono.variable,
       ].join(' ')}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="bg-white text-slate-900 antialiased">
         <Header />
         <main>{children}</main>
