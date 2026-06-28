@@ -1,6 +1,7 @@
-import Hero  from '@/sections/Hero'
-import About from '@/sections/About'
-import AiOs  from '@/sections/AiOs'
+import Hero      from '@/sections/Hero'
+import About     from '@/sections/About'
+import AiOs      from '@/sections/AiOs'
+import Factories from '@/sections/Factories'
 
 export default function HomePage() {
   return (
@@ -8,6 +9,7 @@ export default function HomePage() {
       <Hero />
       <About />
       <AiOs />
+      <Factories />
     </>
   )
 }
