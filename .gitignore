@@ -1,0 +1,21 @@
+# Node.js
+website/node_modules/
+website/.next/
+website/out/
+website/.env.local
+website/.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
