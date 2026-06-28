@@ -3,6 +3,7 @@ import About     from '@/sections/About'
 import AiOs      from '@/sections/AiOs'
 import Factories from '@/sections/Factories'
 import Roadmap   from '@/sections/Roadmap'
+import News      from '@/sections/News'
 
 export default function HomePage() {
   return (
@@ -12,6 +13,7 @@ export default function HomePage() {
       <AiOs />
       <Factories />
       <Roadmap />
+      <News />
     </>
   )
 }
