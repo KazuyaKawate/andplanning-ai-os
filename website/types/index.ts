@@ -178,6 +178,14 @@ export type ModelOption = {
   contextWindow: number
 }
 
+export type WorkflowInputField = {
+  id:          string
+  label:       string
+  placeholder: string
+  required:    boolean
+  type:        'text' | 'textarea'
+}
+
 export type OsSettings = {
   defaultModel:      string
   fallbackModel:     string

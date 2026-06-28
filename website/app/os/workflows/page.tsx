@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import Link from 'next/link'
 import StatusBadge from '@/components/os/StatusBadge'
 import {
   mockWorkflows, mockWorkflowRuns,
@@ -182,10 +183,16 @@ function WorkflowCard({ wf, onRun }: { wf: Workflow; onRun: (wf: Workflow) => vo
           )}
           <button
             onClick={() => onRun(wf)}
+            className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-white/[0.05] text-slate-400 border border-white/[0.08] hover:bg-white/[0.08] transition-colors"
+          >
+            History
+          </button>
+          <Link
+            href={`/os/workflows/${wf.id}`}
             className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-brand-blue/20 text-brand-blue-bright hover:bg-brand-blue/30 transition-colors"
           >
             ▶ Run
-          </button>
+          </Link>
         </div>
       </div>
     </motion.div>

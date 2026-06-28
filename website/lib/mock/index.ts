@@ -11,6 +11,7 @@ import type {
   Workflow, WorkflowRun, WorkflowStep,
   FactoryRuntime, QueueItem, ActivityItem,
   MemoryEntry, DashboardMetrics, OsSettings, ModelOption,
+  WorkflowInputField,
 } from '@/types'
 
 /* ======================================================================
@@ -534,6 +535,286 @@ export const mockDashboard: DashboardMetrics = {
   tokensUsedToday:  52840,
   activeFactories:  2,
   errorsToday:      2,
+}
+
+/* ======================================================================
+   WORKFLOW EXECUTION — step templates per workflow
+   Replace with: GET /api/workflows/{id}/steps
+   ====================================================================== */
+
+export const mockWorkflowSteps: Record<string, Array<{ name: string; durationMs: number }>> = {
+  'wf-001': [
+    { name: 'キーワード分析',     durationMs: 2100 },
+    { name: 'ターゲット設定',     durationMs: 1200 },
+    { name: 'アウトライン生成',   durationMs: 3400 },
+    { name: '本文執筆 (§1–§3)',   durationMs: 8200 },
+    { name: '本文執筆 (§4–§6)',   durationMs: 8200 },
+    { name: 'SEO最適化',         durationMs: 2800 },
+    { name: 'CTA生成',           durationMs: 1500 },
+    { name: 'メタ文章生成',       durationMs: 2400 },
+    { name: '最終レビュー',       durationMs: 4200 },
+  ],
+  'wf-002': [
+    { name: 'テーマ分析',         durationMs: 1800 },
+    { name: 'アウトライン生成',   durationMs: 2600 },
+    { name: '本文執筆 (前半)',     durationMs: 7400 },
+    { name: '本文執筆 (後半)',     durationMs: 7400 },
+    { name: 'メタ情報生成',       durationMs: 1900 },
+    { name: '最終レビュー',       durationMs: 3200 },
+  ],
+  'wf-003': [
+    { name: 'クエリ設計',         durationMs: 1200 },
+    { name: 'Web情報収集',        durationMs: 5600 },
+    { name: '情報フィルタリング', durationMs: 2200 },
+    { name: '要約生成',           durationMs: 4100 },
+    { name: 'レポート構造化',     durationMs: 3300 },
+  ],
+  'wf-004': [
+    { name: 'ターゲット分析',     durationMs: 1600 },
+    { name: '企画案生成',         durationMs: 4800 },
+    { name: '詳細設計',           durationMs: 3200 },
+    { name: '最終仕上げ',         durationMs: 2000 },
+  ],
+  'wf-005': [
+    { name: 'テーマ分析',         durationMs: 1400 },
+    { name: '構成設計',           durationMs: 2800 },
+    { name: '台本執筆',           durationMs: 9600 },
+    { name: 'サムネイル指示作成', durationMs: 2200 },
+    { name: 'SEOタグ生成',        durationMs: 1800 },
+  ],
+  'wf-006': [
+    { name: 'テーマ分析',         durationMs: 1000 },
+    { name: '投稿文生成',         durationMs: 4200 },
+    { name: 'ハッシュタグ生成',   durationMs: 1600 },
+  ],
+}
+
+/* ======================================================================
+   WORKFLOW EXECUTION — input schemas
+   Replace with: GET /api/workflows/{id}/schema
+   ====================================================================== */
+
+export const mockWorkflowInputs: Record<string, WorkflowInputField[]> = {
+  'wf-001': [
+    { id: 'keyword', label: 'ターゲットキーワード', placeholder: '例: AI OS 自動化',         required: true,  type: 'text'     },
+    { id: 'target',  label: 'ターゲット読者',       placeholder: '例: スタートアップ経営者', required: true,  type: 'text'     },
+    { id: 'tone',    label: 'トーン・文体',         placeholder: '例: 専門的・わかりやすい', required: false, type: 'text'     },
+    { id: 'notes',   label: '補足メモ',             placeholder: '含めたい内容・禁止事項など', required: false, type: 'textarea' },
+  ],
+  'wf-002': [
+    { id: 'title',    label: '記事タイトル案',      placeholder: '例: Next.js で作る AI OS',  required: true,  type: 'text'     },
+    { id: 'keyword',  label: 'メインキーワード',    placeholder: '例: Next.js AI',            required: true,  type: 'text'     },
+    { id: 'category', label: 'カテゴリ',            placeholder: '例: 技術・ビジネス',         required: false, type: 'text'     },
+  ],
+  'wf-003': [
+    { id: 'theme',   label: 'リサーチテーマ',       placeholder: '例: 生成AI × コンテンツマーケティング 2025', required: true, type: 'text' },
+    { id: 'period',  label: '対象期間',             placeholder: '例: 2025年上半期',           required: false, type: 'text'     },
+    { id: 'depth',   label: '深度',                 placeholder: '例: 概要 / 詳細 / 詳細+事例', required: false, type: 'text'    },
+  ],
+  'wf-004': [
+    { id: 'target',  label: 'ターゲット読者',       placeholder: '例: フリーランスデザイナー', required: true,  type: 'text'     },
+    { id: 'theme',   label: 'コンテンツテーマ',     placeholder: '例: AI Factory 解説シリーズ', required: true, type: 'text'    },
+    { id: 'count',   label: '企画案の本数',         placeholder: '例: 5',                     required: false, type: 'text'     },
+  ],
+  'wf-005': [
+    { id: 'topic',    label: '動画テーマ',          placeholder: '例: AI OS とは何か？',        required: true,  type: 'text'     },
+    { id: 'duration', label: '動画尺',              placeholder: '例: 10分',                  required: false, type: 'text'     },
+    { id: 'style',    label: 'スタイル',            placeholder: '例: 解説系・エンタメ',       required: false, type: 'text'     },
+  ],
+  'wf-006': [
+    { id: 'theme',    label: '投稿テーマ',          placeholder: '例: AI工場 新機能リリース', required: true,  type: 'text'     },
+    { id: 'platform', label: 'プラットフォーム',   placeholder: '例: X・Instagram・LinkedIn', required: false, type: 'text'     },
+    { id: 'tone',     label: 'トーン',              placeholder: '例: カジュアル・プロフェッショナル', required: false, type: 'text' },
+  ],
+}
+
+/* ======================================================================
+   WORKFLOW EXECUTION — mock output generator
+   Replace with: result field from GET /api/runs/{runId}
+   ====================================================================== */
+
+export function getMockOutput(workflowId: string, inputs: Record<string, string>): string {
+  const kw     = inputs['keyword'] ?? inputs['theme'] ?? inputs['topic'] ?? inputs['title'] ?? 'AI自動化'
+  const target = inputs['target'] ?? 'ビジネスパーソン'
+
+  switch (workflowId) {
+    case 'wf-001':
+      return `# ${kw}とは？${target}が今すぐ導入すべき完全ガイド
+
+## はじめに
+${kw}は、現代のビジネスにおいて欠かせない技術トレンドとなっています。本記事では、その仕組みと実践的な活用方法を${target}向けにわかりやすく解説します。
+
+## ${kw}の基本概念
+${kw}とは、AIが複数のステップを自動的に処理し、人間の介入なしに成果物を生成する仕組みです。
+
+## 導入のメリット
+1. **作業時間の大幅削減** — 手作業で4時間かかる作業が15分に
+2. **品質の均一化** — AI審査による一定品質の担保
+3. **スケーラビリティ** — 需要増加に即座に対応
+
+## 実装ステップ
+1. ワークフロー設計
+2. AIモデルの選定
+3. テスト実行と調整
+4. 本番デプロイ
+
+## まとめ
+${kw}の導入により、${target}のビジネスは次のステージへ進むことができます。まず小さなユースケースから試してみることを推奨します。
+
+---
+*Generated by And Planning Writing Factory · SEOスコア: 91/100 · 文字数: 2,450*`
+
+    case 'wf-002':
+      return `# ${kw}
+
+## 記事概要
+**カテゴリ**: ${inputs['category'] ?? '技術'} | **推定読了時間**: 8分 | **ターゲット**: エンジニア・プロダクトマネージャー
+
+## アウトライン
+1. はじめに — なぜ今${kw}なのか
+2. 基礎概念と用語解説
+3. セットアップ手順（ステップバイステップ）
+4. 実践コード例
+5. よくある落とし穴とその回避法
+6. まとめと次のステップ
+
+## メタ情報
+- **タイトルタグ**: ${kw} 完全ガイド | 実装から運用まで
+- **メタディスクリプション**: ${kw}を実務で活用するための完全ガイド。セットアップから本番運用まで解説。
+- **推奨KW**: ${kw}, 実装方法, チュートリアル
+
+---
+*Generated by And Planning Writing Factory · 文字数: 1,800*`
+
+    case 'wf-003':
+      return `# ${kw} — トレンドリサーチレポート
+
+## エグゼクティブサマリー
+${kw}に関するリサーチ結果をまとめました。収集ソース数: 24、対象期間: ${inputs['period'] ?? '直近3ヶ月'}
+
+## 主要トレンド
+1. **急速な普及**: 採用率が前年比 +180% — 特にSMBセグメント
+2. **技術進化**: マルチモーダル対応と長文脈処理の実用化
+3. **コスト低下**: API単価が12ヶ月で平均 -65%
+
+## 競合動向
+| プレイヤー | 特徴 | 注目点 |
+|-----------|------|--------|
+| A社 | エンタープライズ向け | 大型調達を完了 |
+| B社 | SMB特化 | 月次成長率 42% |
+| C社 | API提供型 | パートナー網を拡大中 |
+
+## 注目キーワード
+#AI自動化 #ワークフロー #マルチエージェント #RAG #Function Calling
+
+---
+*Generated by And Planning Research Factory · ソース: 24件 · 信頼スコア: 87%*`
+
+    case 'wf-004':
+      return `# ${target}向け ${kw} — コンテンツ企画案
+
+## 企画案 #1：「入門編」
+**タイトル**: ${kw}をゼロから始める完全ロードマップ
+**形式**: 解説記事 / 6,000字
+**フック**: 「設定10分、成果は即日」
+
+## 企画案 #2：「比較編」
+**タイトル**: 主要ツール5選を徹底比較
+**形式**: 比較表 + レビュー記事
+**フック**: 「失敗しない選び方」
+
+## 企画案 #3：「事例編」
+**タイトル**: ${target}が実際に導入して感じた変化
+**形式**: インタビュー形式
+**フック**: リアルな声で信頼獲得
+
+## 企画案 #4：「応用編」
+**タイトル**: 上級テクニック集
+**形式**: ハウツー記事
+**フック**: 「他のユーザーが知らない方法」
+
+---
+*Generated by And Planning Creator Factory · 企画案: 4件*`
+
+    case 'wf-005':
+      return `# ${kw} — YouTube台本
+
+## 動画概要
+- **尺**: ${inputs['duration'] ?? '10分'}
+- **スタイル**: ${inputs['style'] ?? '解説系'}
+
+## オープニング（0:00–0:30）
+「今日は${kw}について話します。この動画を最後まで見ると、○○ができるようになります。」
+
+## メインコンテンツ（0:30–8:30）
+**パート1「背景」（2分）**
+- ${kw}とは何か
+- なぜ今注目されているのか
+
+**パート2「仕組み」（3分）**
+- ステップ・バイ・ステップ解説
+- 図解・スクリーンキャスト挿入ポイント
+
+**パート3「実践」（3分）**
+- デモ映像
+- よくあるミスと対処法
+
+## エンディング（8:30–10:00）
+「まとめると○○です。次回は××を解説します。チャンネル登録お願いします！」
+
+## サムネイル指示
+背景: 濃紺 / メインテキスト: 「${kw}」白太字 / サブテキスト: 「完全解説」黄色
+
+---
+*Generated by And Planning Video Factory*`
+
+    case 'wf-006':
+      return `# ${kw} — SNS投稿文セット
+
+## X (Twitter)
+${kw}を試してみた。
+
+結果：
+→ 作業時間 75% 削減
+→ 品質は手作業と同等以上
+→ コストは月額 ¥3,000以下
+
+これは使わない理由がない。詳しくはこちら👇
+#AI自動化 #${kw.replace(/\s/g, '')}
+
+---
+
+## Instagram
+✨ ${kw} で仕事が変わった
+
+4時間かかっていた作業が
+たった15分に⏱
+
+AI Factory を使えば
+誰でも簡単にできます
+
+詳細はプロフィールのリンクから👆
+
+#AI活用 #自動化 #働き方改革
+
+---
+
+## LinkedIn
+【${target}向け】${kw}の実践的活用法
+
+先月から導入した結果、チームの生産性が大幅に向上しました。具体的な数字はこちら：
+・作業時間: -75%
+・成果物品質: 維持 or 向上
+・月次コスト: ¥3,000以下
+
+特に効果的だったのが...（続きはコメント欄へ）
+
+---
+*Generated by And Planning Marketing Factory · 3プラットフォーム対応*`
+
+    default:
+      return `Workflow ${workflowId} completed successfully.\n\nInputs: ${JSON.stringify(inputs, null, 2)}`
+  }
 }
 
 /* ======================================================================
