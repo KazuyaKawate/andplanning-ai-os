@@ -3,6 +3,7 @@
 import { motion } from 'motion/react'
 import SectionWrapper from '@/components/ui/SectionWrapper'
 import Badge from '@/components/ui/Badge'
+import PlaceholderImage from '@/components/ui/PlaceholderImage'
 import { osLayers } from '@/data/site'
 
 /* ========== Animation ========== */
@@ -69,8 +70,22 @@ export default function AiOs() {
           </p>
         </motion.div>
 
-        {/* Architecture Diagram */}
-        <motion.div variants={item} className="mt-14">
+        {/* System overview image */}
+        <motion.div variants={item} className="mt-10">
+          <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
+            <PlaceholderImage
+              src="/images/ai-os-diagram.svg"
+              alt="And Planning AI OS 3層アーキテクチャ図解 — OS Foundation / Engine / Factory Layer"
+              width={800}
+              height={360}
+              className="w-full h-auto"
+              fallbackBg="#0F172A"
+            />
+          </div>
+        </motion.div>
+
+        {/* Interactive Architecture Diagram */}
+        <motion.div variants={item} className="mt-8">
           <div className="rounded-2xl overflow-hidden border border-white/10">
 
             {/* Layer 1: Foundation */}

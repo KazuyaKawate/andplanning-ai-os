@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#030712"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="l1-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="l2-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#2563EB" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="l3-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E293B" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#1E293B" stop-opacity="0.3"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="800" height="360" fill="url(#bg)"/>
+
+  <!-- Grid -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1E293B" stroke-width="0.5"/>
+  </pattern>
+  <rect width="800" height="360" fill="url(#grid)"/>
+
+  <!-- Layer 1: Foundation -->
+  <rect x="20" y="20" width="760" height="90" rx="12" fill="url(#l1-grad)" stroke="#06B6D4" stroke-width="0.8" stroke-opacity="0.4"/>
+  <text x="38" y="48" font-family="monospace" font-size="9" font-weight="700" fill="#06B6D4" letter-spacing="2">LAYER 1 — OS FOUNDATION</text>
+
+  <!-- Foundation components -->
+  <rect x="100" y="60" width="160" height="38" rx="8" fill="#0F172A" stroke="#06B6D4" stroke-width="0.8" stroke-opacity="0.6"/>
+  <text x="180" y="84" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#06B6D4">◫  Inbox</text>
+
+  <rect x="320" y="60" width="160" height="38" rx="8" fill="#0F172A" stroke="#06B6D4" stroke-width="0.8" stroke-opacity="0.6"/>
+  <text x="400" y="84" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#06B6D4">⏱  Scheduler</text>
+
+  <rect x="540" y="60" width="160" height="38" rx="8" fill="#0F172A" stroke="#06B6D4" stroke-width="0.8" stroke-opacity="0.6"/>
+  <text x="620" y="84" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#06B6D4">◉  Memory</text>
+
+  <!-- Arrow 1→2 -->
+  <line x1="400" y1="110" x2="400" y2="130" stroke="#334155" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <polygon points="394,128 406,128 400,136" fill="#334155"/>
+
+  <!-- Layer 2: Engine -->
+  <rect x="20" y="135" width="760" height="90" rx="12" fill="url(#l2-grad)" stroke="#2563EB" stroke-width="0.8" stroke-opacity="0.4"/>
+  <text x="38" y="163" font-family="monospace" font-size="9" font-weight="700" fill="#3B82F6" letter-spacing="2">LAYER 2 — ENGINE</text>
+
+  <!-- Engine components -->
+  <rect x="100" y="175" width="160" height="38" rx="8" fill="#0F172A" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.6"/>
+  <text x="180" y="199" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#3B82F6">⇄  AI Router</text>
+
+  <rect x="320" y="175" width="160" height="38" rx="8" fill="#0F172A" stroke="#3B82F6" stroke-width="1.2" stroke-opacity="0.9"/>
+  <text x="400" y="199" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#3B82F6">⚙  Workflow</text>
+
+  <rect x="540" y="175" width="160" height="38" rx="8" fill="#0F172A" stroke="#3B82F6" stroke-width="0.8" stroke-opacity="0.6"/>
+  <text x="620" y="199" font-family="system-ui,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#3B82F6">◈  Orchestrator</text>
+
+  <!-- Arrow 2→3 -->
+  <line x1="400" y1="225" x2="400" y2="245" stroke="#334155" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <polygon points="394,243 406,243 400,251" fill="#334155"/>
+
+  <!-- Layer 3: Factory -->
+  <rect x="20" y="250" width="760" height="90" rx="12" fill="url(#l3-grad)" stroke="#1E293B" stroke-width="1"/>
+  <text x="38" y="278" font-family="monospace" font-size="9" font-weight="700" fill="#94A3B8" letter-spacing="2">LAYER 3 — FACTORIES</text>
+
+  <!-- Factory mini-cards -->
+  <rect x="42"  y="288" width="106" height="38" rx="7" fill="#0F172A" stroke="#8B5CF6" stroke-width="0.7" stroke-opacity="0.7"/>
+  <text x="95"  y="311" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#8B5CF6">✦ Creator</text>
+
+  <rect x="162" y="288" width="106" height="38" rx="7" fill="#0F172A" stroke="#2563EB" stroke-width="1" stroke-opacity="0.9"/>
+  <text x="215" y="311" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#3B82F6">✐ Writing</text>
+
+  <rect x="282" y="288" width="106" height="38" rx="7" fill="#0F172A" stroke="#DC2626" stroke-width="0.7" stroke-opacity="0.6"/>
+  <text x="335" y="311" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#DC2626">▶ Video</text>
+
+  <rect x="402" y="288" width="106" height="38" rx="7" fill="#0F172A" stroke="#059669" stroke-width="0.7" stroke-opacity="0.6"/>
+  <text x="455" y="311" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#059669">◎ Research</text>
+
+  <rect x="522" y="288" width="106" height="38" rx="7" fill="#0F172A" stroke="#D97706" stroke-width="0.7" stroke-opacity="0.6"/>
+  <text x="575" y="311" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#D97706">◈ Marketing</text>
+
+  <rect x="642" y="288" width="106" height="38" rx="7" fill="#0F172A" stroke="#7C3AED" stroke-width="0.7" stroke-opacity="0.6"/>
+  <text x="695" y="311" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#7C3AED">✧ Fortune</text>
+</svg>

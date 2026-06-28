@@ -1,16 +1,15 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* Compression */
   compress: true,
 
-  /* Image optimization */
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 3600,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
-  /* Security headers */
   async headers() {
     return [
       {

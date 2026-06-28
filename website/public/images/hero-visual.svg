@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 460" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B1121"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <radialGradient id="glow-c" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#1E293B" stroke-width="0.4"/>
+    </pattern>
+  </defs>
+
+  <!-- Base -->
+  <rect width="560" height="460" rx="20" fill="url(#bg)"/>
+  <rect width="560" height="460" rx="20" fill="url(#grid)"/>
+  <rect width="560" height="460" rx="20" fill="url(#glow-c)"/>
+  <rect width="560" height="460" rx="20" stroke="#1E293B" stroke-width="1"/>
+
+  <!-- Top bar -->
+  <rect x="0" y="0" width="560" height="50" rx="20" fill="#1E293B"/>
+  <rect x="0" y="38" width="560" height="12" fill="#1E293B"/>
+
+  <!-- Traffic lights -->
+  <circle cx="24" cy="25" r="5.5" fill="#EF4444" fill-opacity="0.65"/>
+  <circle cx="42" cy="25" r="5.5" fill="#F59E0B" fill-opacity="0.65"/>
+  <circle cx="60" cy="25" r="5.5" fill="#22C55E" fill-opacity="0.65"/>
+
+  <!-- Title -->
+  <text x="82" y="29" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="700" fill="#94A3B8">And Planning</text>
+  <text x="178" y="29" font-family="system-ui,-apple-system,sans-serif" font-size="12" fill="#334155">AI OS v0.2</text>
+
+  <!-- Live badge -->
+  <rect x="490" y="16" width="46" height="18" rx="4" fill="#022C22" stroke="#22C55E" stroke-width="0.8"/>
+  <circle cx="501" cy="25" r="3" fill="#22C55E"/>
+  <text x="508" y="29" font-family="monospace" font-size="8" font-weight="700" fill="#22C55E">LIVE</text>
+
+  <!-- Timestamp -->
+  <text x="22" y="75" font-family="monospace" font-size="9" fill="#334155">▶  note_daily  running... step 3/9</text>
+
+  <!-- ─── Factory cards row 1 ─── -->
+  <!-- Creator Factory -->
+  <rect x="20" y="88" width="163" height="82" rx="9" fill="#0B1121" stroke="#8B5CF6" stroke-width="0.6" stroke-opacity="0.5"/>
+  <circle cx="167" cy="102" r="3.5" fill="#F59E0B" fill-opacity="0.9"/>
+  <text x="32" y="104" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#8B5CF6">✦  Creator Factory</text>
+  <text x="32" y="119" font-family="monospace" font-size="7.5" fill="#475569">status  : stub</text>
+  <text x="32" y="132" font-family="monospace" font-size="7.5" fill="#334155">schedule: —</text>
+  <text x="32" y="145" font-family="monospace" font-size="7.5" fill="#475569">next    : 2026 Q3</text>
+  <text x="32" y="158" font-family="monospace" font-size="7.5" fill="#1E3A5F">last run: —</text>
+
+  <!-- Writing Factory (highlighted / active) -->
+  <rect x="197" y="88" width="163" height="82" rx="9" fill="#0B1121" stroke="#3B82F6" stroke-width="1.2"/>
+  <circle cx="344" cy="102" r="3.5" fill="#22C55E"/>
+  <text x="209" y="104" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#3B82F6">✐  Writing Factory</text>
+  <text x="209" y="119" font-family="monospace" font-size="7.5" fill="#22C55E">status  : active ●</text>
+  <text x="209" y="132" font-family="monospace" font-size="7.5" fill="#3B82F6">schedule: 06:00 JST</text>
+  <text x="209" y="145" font-family="monospace" font-size="7.5" fill="#475569">提供中</text>
+  <text x="209" y="158" font-family="monospace" font-size="7.5" fill="#334155">steps   : 9</text>
+
+  <!-- Video Factory -->
+  <rect x="374" y="88" width="163" height="82" rx="9" fill="#0B1121" stroke="#DC2626" stroke-width="0.6" stroke-opacity="0.5"/>
+  <circle cx="521" cy="102" r="3.5" fill="#F59E0B" fill-opacity="0.9"/>
+  <text x="386" y="104" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#DC2626">▶  Video Factory</text>
+  <text x="386" y="119" font-family="monospace" font-size="7.5" fill="#475569">status  : stub</text>
+  <text x="386" y="132" font-family="monospace" font-size="7.5" fill="#334155">schedule: —</text>
+  <text x="386" y="145" font-family="monospace" font-size="7.5" fill="#475569">next    : 2026 Q3</text>
+  <text x="386" y="158" font-family="monospace" font-size="7.5" fill="#1E3A5F">last run: —</text>
+
+  <!-- ─── Factory cards row 2 ─── -->
+  <rect x="20"  y="182" width="163" height="82" rx="9" fill="#0B1121" stroke="#059669" stroke-width="0.6" stroke-opacity="0.5"/>
+  <circle cx="167" cy="196" r="3.5" fill="#F59E0B" fill-opacity="0.9"/>
+  <text x="32"  y="198" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#059669">◎  Research Factory</text>
+  <text x="32"  y="213" font-family="monospace" font-size="7.5" fill="#475569">status  : stub</text>
+  <text x="32"  y="226" font-family="monospace" font-size="7.5" fill="#334155">schedule: —</text>
+  <text x="32"  y="239" font-family="monospace" font-size="7.5" fill="#475569">next    : 2026 Q4</text>
+  <text x="32"  y="252" font-family="monospace" font-size="7.5" fill="#1E3A5F">last run: —</text>
+
+  <rect x="197" y="182" width="163" height="82" rx="9" fill="#0B1121" stroke="#D97706" stroke-width="0.6" stroke-opacity="0.5"/>
+  <circle cx="344" cy="196" r="3.5" fill="#F59E0B" fill-opacity="0.9"/>
+  <text x="209" y="198" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#D97706">◈  Marketing Factory</text>
+  <text x="209" y="213" font-family="monospace" font-size="7.5" fill="#475569">status  : stub</text>
+  <text x="209" y="226" font-family="monospace" font-size="7.5" fill="#334155">schedule: —</text>
+  <text x="209" y="239" font-family="monospace" font-size="7.5" fill="#475569">next    : 2026 Q4</text>
+  <text x="209" y="252" font-family="monospace" font-size="7.5" fill="#1E3A5F">last run: —</text>
+
+  <rect x="374" y="182" width="163" height="82" rx="9" fill="#0B1121" stroke="#7C3AED" stroke-width="0.6" stroke-opacity="0.5"/>
+  <circle cx="521" cy="196" r="3.5" fill="#F59E0B" fill-opacity="0.9"/>
+  <text x="386" y="198" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#7C3AED">✧  Fortune Factory</text>
+  <text x="386" y="213" font-family="monospace" font-size="7.5" fill="#475569">status  : stub</text>
+  <text x="386" y="226" font-family="monospace" font-size="7.5" fill="#334155">schedule: —</text>
+  <text x="386" y="239" font-family="monospace" font-size="7.5" fill="#475569">next    : 2027 Q1</text>
+  <text x="386" y="252" font-family="monospace" font-size="7.5" fill="#1E3A5F">last run: —</text>
+
+  <!-- ─── Bottom panels ─── -->
+  <!-- AI Router -->
+  <rect x="20" y="278" width="247" height="80" rx="9" fill="#0B1121" stroke="#1E293B" stroke-width="1"/>
+  <text x="32" y="296" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">AI Router</text>
+  <rect x="116" y="289" width="36" height="12" rx="3" fill="#022C22" stroke="#22C55E" stroke-width="0.6"/>
+  <text x="134" y="299" font-family="monospace" font-size="7" text-anchor="middle" fill="#22C55E">ready</text>
+  <text x="32" y="316" font-family="monospace" font-size="8" fill="#475569">GPT-4o      ●─── primary</text>
+  <text x="32" y="330" font-family="monospace" font-size="8" fill="#334155">Claude      ●─── backup</text>
+  <text x="32" y="344" font-family="monospace" font-size="8" fill="#334155">Gemini      ●─── backup</text>
+
+  <!-- Workflow Engine -->
+  <rect x="281" y="278" width="256" height="80" rx="9" fill="#0B1121" stroke="#2563EB" stroke-width="0.8" stroke-opacity="0.7"/>
+  <text x="293" y="296" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#3B82F6">Workflow Engine</text>
+  <text x="293" y="316" font-family="monospace" font-size="8" fill="#06B6D4">job     : note_daily</text>
+  <text x="293" y="330" font-family="monospace" font-size="8" fill="#3B82F6">step    : 3/9  note_write</text>
+  <text x="293" y="344" font-family="monospace" font-size="8" fill="#22C55E">eta     : ~38s</text>
+
+  <!-- Terminal bar -->
+  <rect x="0"  y="374" width="560" height="46" rx="20" fill="#1E293B"/>
+  <rect x="0"  y="362" width="560" height="12" fill="#1E293B"/>
+  <text x="22" y="402" font-family="monospace" font-size="9" fill="#475569">$</text>
+  <text x="32" y="402" font-family="monospace" font-size="9" fill="#94A3B8"> andplanning run note_daily --ai-mode</text>
+  <rect x="330" y="393" width="5" height="12" rx="1" fill="#06B6D4" fill-opacity="0.8"/>
+
+  <!-- Workflow progress bar -->
+  <rect x="22" y="416" width="516" height="3" rx="2" fill="#0F172A"/>
+  <rect x="22" y="416" width="172" height="3" rx="2" fill="#2563EB"/>
+  <text x="540" y="419" font-family="monospace" font-size="7" fill="#475569">33%</text>
+</svg>

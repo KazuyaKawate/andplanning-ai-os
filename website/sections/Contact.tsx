@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { motion } from 'motion/react'
 import SectionWrapper from '@/components/ui/SectionWrapper'
 import Badge from '@/components/ui/Badge'
@@ -175,6 +176,16 @@ export default function Contact() {
       >
         {/* Header */}
         <motion.div variants={item} className="text-center">
+          {/* Brand logo */}
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/logos/main-logo.svg"
+              alt="And Planning ブランドロゴ"
+              width={180}
+              height={36}
+              className="h-9 w-auto"
+            />
+          </div>
           <Badge variant="default">Contact</Badge>
           <h2 className="mt-6 text-4xl lg:text-5xl font-bold font-heading text-slate-900 tracking-tight">
             一緒に未来を作りましょう

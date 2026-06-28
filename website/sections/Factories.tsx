@@ -3,6 +3,7 @@
 import { motion } from 'motion/react'
 import SectionWrapper from '@/components/ui/SectionWrapper'
 import Badge from '@/components/ui/Badge'
+import PlaceholderImage from '@/components/ui/PlaceholderImage'
 import { factories } from '@/data/site'
 import type { Factory } from '@/types'
 
@@ -41,38 +42,49 @@ function FactoryCard({ factory }: { factory: Factory }) {
       variants={item}
       className="group relative flex flex-col rounded-2xl border border-slate-100 bg-white overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
     >
-      {/* Accent top bar */}
-      <div
-        className="h-1 w-full shrink-0 transition-all duration-300 group-hover:h-1.5"
-        style={{ backgroundColor: factory.accentColor }}
-        aria-hidden="true"
-      />
+      {/* Factory image area */}
+      <div className="relative overflow-hidden shrink-0" style={{ height: '160px' }}>
+        <PlaceholderImage
+          src={`/images/${factory.id}-factory.svg`}
+          alt={`${factory.name} — ${factory.nameJa} のビジュアル`}
+          width={400}
+          height={220}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          fallbackBg={factory.accentColor}
+        />
+        {/* Gradient overlay for text legibility */}
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"
+          aria-hidden="true"
+        />
+        {/* Status badge on image */}
+        <div className="absolute top-3 right-3">
+          <Badge variant={statusVariantMap[factory.status]}>
+            {statusLabelMap[factory.status]}
+          </Badge>
+        </div>
+      </div>
 
       <div className="flex flex-col flex-1 p-7">
-        {/* Icon + status */}
-        <div className="flex items-start justify-between">
+        {/* Icon + Title */}
+        <div className="flex items-center gap-3">
           <span
-            className="text-4xl leading-none"
+            className="text-3xl leading-none"
             style={{ color: factory.accentColor }}
             aria-hidden="true"
           >
             {factory.icon}
           </span>
-          <Badge variant={statusVariantMap[factory.status]}>
-            {statusLabelMap[factory.status]}
-          </Badge>
-        </div>
-
-        {/* Title */}
-        <div className="mt-5">
-          <h3 className="text-xl font-bold font-heading text-slate-900 tracking-tight">
-            {factory.name}
-          </h3>
-          <p className="text-sm text-slate-400 mt-0.5">{factory.nameJa}</p>
+          <div>
+            <h3 className="text-xl font-bold font-heading text-slate-900 tracking-tight">
+              {factory.name}
+            </h3>
+            <p className="text-sm text-slate-400">{factory.nameJa}</p>
+          </div>
         </div>
 
         {/* Description */}
-        <p className="mt-4 text-sm text-slate-500 leading-relaxed">
+        <p className="mt-5 text-sm text-slate-500 leading-relaxed">
           {factory.descriptionJa}
         </p>
 

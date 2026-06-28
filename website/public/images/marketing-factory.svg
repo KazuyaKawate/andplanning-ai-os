@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 220">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B45309"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="white" fill-opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="220" fill="url(#g)"/>
+  <rect width="400" height="220" fill="url(#dots)"/>
+  <circle cx="360" cy="40" r="90" fill="white" fill-opacity="0.04"/>
+  <circle cx="30" cy="190" r="70" fill="white" fill-opacity="0.04"/>
+  <text x="200" y="108" font-family="system-ui,sans-serif" font-size="60" text-anchor="middle" dominant-baseline="middle" fill="white" fill-opacity="0.92">◈</text>
+  <text x="200" y="168" font-family="system-ui,sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="white" fill-opacity="0.45" letter-spacing="2">MARKETING FACTORY</text>
+</svg>
