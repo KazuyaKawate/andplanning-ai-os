@@ -3,18 +3,18 @@
 /**
  * useOsPolling — Polls OS runtime data at a configurable interval.
  *
- * API CONTRACT — replace each adapter body when connecting real APIs:
- *   dashboard()   → GET /api/dashboard
- *   workflowRuns()→ GET /api/workflow-runs?limit=20
- *   factories()   → GET /api/factories
- *   activity()    → GET /api/activity?limit=10
- *   memory()      → GET /api/memory?limit=20
+ * All async fetches go through `api` from lib/api/runtime.ts.
+ * To switch from mock to a real backend, change the adapter in
+ * lib/api/runtime.ts — nothing here needs to change.
  *
- * Convention: create lib/api/{resource}.ts, implement the same async signature,
- * then swap the adapter reference below.
+ * lib/mock is still imported for the initial useState values only,
+ * so the first render has data without a loading flash. Once the
+ * first poll fires (setTimeout 0), those values are replaced by
+ * api responses.
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { api } from '@/lib/api/runtime'
 import {
   mockDashboard, mockWorkflowRuns, mockFactories, mockActivity, mockMemory,
 } from '@/lib/mock'
@@ -23,7 +23,7 @@ import type {
 } from '@/types'
 
 /* ======================================================================
-   Types
+   Public types (unchanged — Dashboard and other consumers rely on these)
    ====================================================================== */
 
 export type OsPollingData = {
@@ -48,102 +48,21 @@ export type OsPollingControls = {
 }
 
 /* ======================================================================
-   Mock variation helpers — make each poll return slightly different data
-   so the dashboard visibly updates. Delete this section when connecting
-   a real API (real data changes naturally).
-   ====================================================================== */
-
-let _fetchCount = 0
-
-// Simulated live activity pool — rotates on each poll
-const LIVE_ACTIVITY: Array<Omit<ActivityItem, 'id' | 'timestamp'>> = [
-  { type: 'run_complete', message: 'Trend Research Report が完了しました（4,200字）',     factoryId: 'research', meta: { tokens: 8400  } },
-  { type: 'run_start',    message: 'YouTube Script Generator を開始しました',             factoryId: 'video'                           },
-  { type: 'memory_save',  message: 'コンテンツ企画案をメモリに保存しました',               factoryId: 'creator',  meta: { size: 1600   } },
-  { type: 'run_complete', message: 'SNS Post Generator が完了しました（3投稿生成）',       factoryId: 'marketing',meta: { tokens: 2100 } },
-  { type: 'run_error',    message: 'Content Concept Generator でエラーが発生しました',    factoryId: 'creator'                         },
-  { type: 'run_start',    message: 'Note Article 9-Step を開始しました',                  factoryId: 'writing'                         },
-  { type: 'run_complete', message: 'Blog Article Generator が完了しました（1,800字）',    factoryId: 'writing',  meta: { tokens: 10200 } },
-  { type: 'memory_save',  message: 'SEOキーワード分析結果をメモリに保存しました',         factoryId: 'writing',  meta: { size: 1840   } },
-]
-
-function delay(ms: number) { return new Promise(r => setTimeout(r, ms)) }
-
-/* ======================================================================
-   Adapters
-   Replace each function body with a real fetch call.
-   ====================================================================== */
-
-async function adapterDashboard(): Promise<DashboardMetrics> {
-  // Real: const r = await fetch('/api/dashboard'); return r.json()
-  await delay(120)
-  return {
-    ...mockDashboard,
-    totalRunsToday:  mockDashboard.totalRunsToday  + _fetchCount,
-    tokensUsedToday: mockDashboard.tokensUsedToday + _fetchCount * 380,
-    activeWorkflows: Math.max(0, (_fetchCount % 4)),
-    queueDepth:      Math.max(0, mockDashboard.queueDepth - Math.floor(_fetchCount / 3)),
-  }
-}
-
-async function adapterWorkflowRuns(): Promise<WorkflowRun[]> {
-  // Real: const r = await fetch('/api/workflow-runs?limit=20'); return r.json()
-  await delay(80)
-  return mockWorkflowRuns
-}
-
-async function adapterFactories(): Promise<FactoryRuntime[]> {
-  // Real: const r = await fetch('/api/factories'); return r.json()
-  await delay(90)
-  return mockFactories.map(f => ({
-    ...f,
-    completedToday: f.completedToday + _fetchCount,
-  }))
-}
-
-async function adapterActivity(): Promise<ActivityItem[]> {
-  // Real: const r = await fetch('/api/activity?limit=10'); return r.json()
-  await delay(60)
-  const idx     = _fetchCount % LIVE_ACTIVITY.length
-  const newItem: ActivityItem = {
-    id:        `act-live-${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    ...LIVE_ACTIVITY[idx],
-  }
-  // Prepend new item and cap at 10 entries
-  return [newItem, ...mockActivity].slice(0, 10)
-}
-
-async function adapterMemory(): Promise<MemoryEntry[]> {
-  // Real: const r = await fetch('/api/memory?limit=20'); return r.json()
-  await delay(50)
-  return mockMemory
-}
-
-/* Adapter map — swap values to replace mock with real API */
-const adapters = {
-  dashboard:    adapterDashboard,
-  workflowRuns: adapterWorkflowRuns,
-  factories:    adapterFactories,
-  activity:     adapterActivity,
-  memory:       adapterMemory,
-}
-
-/* ======================================================================
    Hook
    ====================================================================== */
 
 const DEFAULT_INTERVAL_MS = 30_000
 
 export function useOsPolling({
-  autoStart   = true,
-  intervalMs  = DEFAULT_INTERVAL_MS,
+  autoStart  = true,
+  intervalMs = DEFAULT_INTERVAL_MS,
 }: {
   autoStart?:  boolean
   intervalMs?: number
 } = {}): OsPollingState & OsPollingControls {
 
-  // Initialise with static mock so first render has data immediately
+  // Initial values come from static mock so the first render shows data
+  // without a loading flash. Replaced by api responses on the first poll.
   const [dashboard,   setDashboard]   = useState<DashboardMetrics>(mockDashboard)
   const [runs,        setRuns]        = useState<WorkflowRun[]>(mockWorkflowRuns)
   const [factories,   setFactories]   = useState<FactoryRuntime[]>(mockFactories)
@@ -154,25 +73,45 @@ export function useOsPolling({
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [error,       setError]       = useState<string | null>(null)
 
-  // Single fetch of all resources in parallel
+  /**
+   * refresh — fetch all 5 resources in parallel via the api runtime.
+   *
+   * ADAPTER BOUNDARY:
+   *   Swap lib/api/runtime.ts to point at a different adapter and
+   *   these calls automatically hit the real backend.
+   *
+   *   api.getDashboard()          → GET /api/dashboard
+   *   api.getWorkflowRuns()       → GET /api/workflow-runs?limit=20
+   *   api.getFactories()          → GET /api/factories
+   *   api.getActivity()           → GET /api/activity?limit=10
+   *   api.getMemory()             → GET /api/memory?limit=20
+   */
   const refresh = useCallback(async () => {
     setIsLoading(true)
     setError(null)
-    _fetchCount++
     try {
-      const [d, r, f, a, m] = await Promise.all([
-        adapters.dashboard(),
-        adapters.workflowRuns(),
-        adapters.factories(),
-        adapters.activity(),
-        adapters.memory(),
+      const [dRes, rRes, fRes, aRes, mRes] = await Promise.all([
+        api.getDashboard(),
+        api.getWorkflowRuns({ limit: 20 }),
+        api.getFactories(),
+        api.getActivity({ limit: 10 }),
+        api.getMemory({ limit: 20 }),
       ])
-      setDashboard(d)
-      setRuns(r)
-      setFactories(f)
-      setActivity(a)
-      setMemory(m)
-      setLastUpdated(new Date().toISOString())
+
+      // Apply successful responses; skip failed ones (stale data stays)
+      if (dRes.ok) setDashboard(dRes.data)
+      if (rRes.ok) setRuns(rRes.data)
+      if (fRes.ok) setFactories(fRes.data)
+      if (aRes.ok) setActivity(aRes.data)
+      if (mRes.ok) setMemory(mRes.data)
+
+      // Surface the first error (if any), otherwise mark as updated
+      const firstError = [dRes, rRes, fRes, aRes, mRes].find(r => !r.ok)
+      if (firstError && !firstError.ok) {
+        setError(firstError.error)
+      } else {
+        setLastUpdated(new Date().toISOString())
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -180,12 +119,12 @@ export function useOsPolling({
     }
   }, [])
 
-  // Start/stop polling via isPolling flag.
+  // Start/stop polling.
   // Initial fetch is deferred via setTimeout(0) so setState is not called
   // synchronously in the effect body (satisfies react-hooks/set-state-in-effect).
   useEffect(() => {
     if (!isPolling) return
-    const firstId  = setTimeout(() => { void refresh() }, 0)
+    const firstId    = setTimeout(() => { void refresh() }, 0)
     const intervalId = setInterval(() => { void refresh() }, intervalMs)
     return () => {
       clearTimeout(firstId)
@@ -194,20 +133,17 @@ export function useOsPolling({
   }, [isPolling, intervalMs, refresh])
 
   return {
-    // Data
     dashboard,
     runs,
     factories,
     activity,
     memory,
-    // Status
     isLoading,
     isPolling,
     lastUpdated,
     error,
-    // Controls
     refresh,
-    start:  () => setIsPolling(true),
-    stop:   () => setIsPolling(false),
+    start: () => setIsPolling(true),
+    stop:  () => setIsPolling(false),
   }
 }
