@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import Link from 'next/link'
 import StatusBadge from '@/components/os/StatusBadge'
 import { api } from '@/lib/api/runtime'
-import { formatRelativeTime, formatDuration, formatTokens } from '@/lib/mock'
+import { formatRelativeTime, formatDuration, formatTokens } from '@/lib/utils'
 import type { Workflow, WorkflowRun, WorkflowStatus } from '@/types'
 
 /* ======================================================================

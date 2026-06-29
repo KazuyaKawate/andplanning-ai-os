@@ -7,7 +7,7 @@ import Link from 'next/link'
 import StatusBadge from '@/components/os/StatusBadge'
 import { useWorkflowEngine } from '@/hooks/useWorkflowEngine'
 import { api } from '@/lib/api/runtime'
-import { formatDuration, formatRelativeTime } from '@/lib/mock'
+import { formatDuration, formatRelativeTime } from '@/lib/utils'
 import type { Workflow, FactoryRuntime, WorkflowInputField } from '@/types'
 
 /* ======================================================================
@@ -183,6 +183,18 @@ function InputForm({
               rows={3}
               className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-slate-300 placeholder:text-slate-600 focus:border-brand-cyan/40 focus:outline-none focus:ring-1 focus:ring-brand-cyan/20 resize-none disabled:opacity-40"
             />
+          ) : field.type === 'select' && field.options && field.options.length > 0 ? (
+            <select
+              value={values[field.id] ?? ''}
+              onChange={e => onChange(field.id, e.target.value)}
+              disabled={disabled}
+              className="w-full rounded-lg border border-white/[0.08] bg-[#0d1117] px-3 py-2 text-sm text-slate-300 focus:border-brand-cyan/40 focus:outline-none focus:ring-1 focus:ring-brand-cyan/20 disabled:opacity-40"
+            >
+              <option value="">選択してください</option>
+              {field.options.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
           ) : (
             <input
               type="text"

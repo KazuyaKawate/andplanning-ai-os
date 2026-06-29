@@ -5,7 +5,8 @@ import Link from 'next/link'
 import MetricCard from '@/components/os/MetricCard'
 import StatusBadge from '@/components/os/StatusBadge'
 import { useOsPolling } from '@/hooks/useOsPolling'
-import { mockQueue, formatRelativeTime, formatTokens } from '@/lib/mock'
+import { formatRelativeTime, formatTokens } from '@/lib/utils'
+import type { WorkflowRun } from '@/types'
 
 /* ========== Animation ========== */
 
@@ -113,6 +114,11 @@ export default function DashboardPage() {
     stop,
   } = useOsPolling()
 
+  // Derive queue from runs — status running or queued
+  const queueRuns: WorkflowRun[] = runs.filter(r =>
+    r.status === 'running' || r.status === 'queued'
+  )
+
   function handleTogglePolling() {
     if (isPolling) stop()
     else start()
@@ -204,6 +210,67 @@ export default function DashboardPage() {
         </motion.div>
       </motion.div>
 
+      {/* Agent Status bar */}
+      <motion.section custom={5} variants={fadeUp} initial="hidden" animate="visible">
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Header */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Agent Status</span>
+            </div>
+
+            {/* Claude Mode badge */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-slate-600 font-mono">Claude Mode:</span>
+              <span className={[
+                'text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border',
+                m.claudeMode === 'real'
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                  : m.claudeMode === 'virtual'
+                  ? 'bg-purple-500/10 border-purple-500/30 text-purple-400'
+                  : 'bg-brand-cyan/10 border-brand-cyan/30 text-brand-cyan',
+              ].join(' ')}>
+                {m.claudeMode === 'real' ? '★ REAL' : m.claudeMode === 'virtual' ? '◎ VIRTUAL' : '⚡ AUTO'}
+              </span>
+            </div>
+
+            {/* Agent run counts */}
+            <div className="flex items-center gap-3 ml-auto">
+              {[
+                { label: 'Agents Today', val: m.agentRunsToday,         color: 'text-slate-300' },
+                { label: 'Virtual',      val: m.virtualClaudeRunsToday,  color: 'text-purple-400' },
+                { label: 'Real Claude',  val: m.realClaudeRunsToday,     color: 'text-amber-400' },
+              ].map(({ label, val, color }) => (
+                <div key={label} className="text-center">
+                  <p className={`text-sm font-bold font-mono ${color}`}>{val}</p>
+                  <p className="text-[9px] text-slate-600 uppercase tracking-wider">{label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Top agents */}
+            {m.topAgents.length > 0 && (
+              <div className="flex items-center gap-2 ml-4 pl-4 border-l border-white/[0.06]">
+                <span className="text-[10px] text-slate-600 font-mono shrink-0">Top:</span>
+                <div className="flex gap-1.5">
+                  {m.topAgents.slice(0, 4).map((a) => (
+                    <span key={a.agentId} className="flex items-center gap-1 text-[10px] font-mono bg-white/[0.04] border border-white/[0.06] rounded-full px-2 py-0.5 text-slate-400">
+                      <span>{a.icon}</span>
+                      <span className="hidden sm:inline">{a.runsToday}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Link to settings */}
+            <Link href="/os/settings" className="text-[10px] text-slate-600 hover:text-brand-cyan transition-colors ml-2 shrink-0">
+              設定 →
+            </Link>
+          </div>
+        </div>
+      </motion.section>
+
       {/* Body: 3 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
@@ -242,27 +309,25 @@ export default function DashboardPage() {
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Queue</h3>
-              <span className="text-[10px] font-mono text-slate-600">{mockQueue.length} 件待機</span>
+              <span className="text-[10px] font-mono text-slate-600">{queueRuns.length} 件待機</span>
             </div>
             <div className="space-y-2">
-              {mockQueue.map((q) => (
-                <div key={q.id} className="flex items-center gap-3 text-sm">
-                  <span className={[
-                    'text-[10px] font-mono px-1.5 py-0.5 rounded',
-                    q.status === 'running' ? 'bg-brand-blue/20 text-brand-blue-bright' : 'bg-white/[0.04] text-slate-600',
-                  ].join(' ')}>
-                    {q.status === 'running' ? '▶ RUN' : '○ QUE'}
-                  </span>
-                  <span className={[
-                    'text-[10px] font-mono',
-                    q.priority === 'high' ? 'text-red-400' : q.priority === 'low' ? 'text-slate-600' : 'text-slate-500',
-                  ].join(' ')}>
-                    {q.priority.toUpperCase()}
-                  </span>
-                  <p className="text-xs text-slate-400 truncate flex-1">{q.name}</p>
-                  <p className="text-[10px] text-slate-600 font-mono shrink-0">{formatRelativeTime(q.createdAt)}</p>
-                </div>
-              ))}
+              {queueRuns.length === 0 ? (
+                <p className="text-xs text-slate-700 text-center py-2">キューは空です</p>
+              ) : (
+                queueRuns.map((q) => (
+                  <div key={q.id} className="flex items-center gap-3 text-sm">
+                    <span className={[
+                      'text-[10px] font-mono px-1.5 py-0.5 rounded',
+                      q.status === 'running' ? 'bg-brand-blue/20 text-brand-blue-bright' : 'bg-white/[0.04] text-slate-600',
+                    ].join(' ')}>
+                      {q.status === 'running' ? '▶ RUN' : '○ QUE'}
+                    </span>
+                    <p className="text-xs text-slate-400 truncate flex-1">{q.workflowName}</p>
+                    <p className="text-[10px] text-slate-600 font-mono shrink-0">{formatRelativeTime(q.startedAt)}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </motion.section>

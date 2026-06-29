@@ -6,7 +6,7 @@ import Link from 'next/link'
 import StatusBadge from '@/components/os/StatusBadge'
 import MetricCard from '@/components/os/MetricCard'
 import { api } from '@/lib/api/runtime'
-import { formatRelativeTime } from '@/lib/mock'
+import { formatRelativeTime } from '@/lib/utils'
 import type { FactoryRuntime, Workflow, WorkflowRun } from '@/types'
 
 /* ======================================================================

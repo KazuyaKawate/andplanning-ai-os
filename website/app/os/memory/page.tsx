@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { api } from '@/lib/api/runtime'
-import { formatRelativeTime } from '@/lib/mock'
+import { formatRelativeTime } from '@/lib/utils'
 import type { MemoryEntry, MemoryTag, FactoryRuntime } from '@/types'
 
 /* ======================================================================

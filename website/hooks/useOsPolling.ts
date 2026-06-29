@@ -15,12 +15,16 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '@/lib/api/runtime'
-import {
-  mockDashboard, mockWorkflowRuns, mockFactories, mockActivity, mockMemory,
-} from '@/lib/mock'
 import type {
   DashboardMetrics, WorkflowRun, FactoryRuntime, ActivityItem, MemoryEntry,
 } from '@/types'
+
+const EMPTY_DASHBOARD: DashboardMetrics = {
+  totalRunsToday: 0, activeWorkflows: 0, queueDepth: 0, memoryItems: 0,
+  successRateToday: 100, tokensUsedToday: 0, activeFactories: 0, errorsToday: 0,
+  costToday: 0, agentRunsToday: 0, virtualClaudeRunsToday: 0, realClaudeRunsToday: 0,
+  claudeMode: 'auto', topAgents: [],
+}
 
 /* ======================================================================
    Public types (unchanged — Dashboard and other consumers rely on these)
@@ -61,13 +65,11 @@ export function useOsPolling({
   intervalMs?: number
 } = {}): OsPollingState & OsPollingControls {
 
-  // Initial values come from static mock so the first render shows data
-  // without a loading flash. Replaced by api responses on the first poll.
-  const [dashboard,   setDashboard]   = useState<DashboardMetrics>(mockDashboard)
-  const [runs,        setRuns]        = useState<WorkflowRun[]>(mockWorkflowRuns)
-  const [factories,   setFactories]   = useState<FactoryRuntime[]>(mockFactories)
-  const [activity,    setActivity]    = useState<ActivityItem[]>(mockActivity)
-  const [memory,      setMemory]      = useState<MemoryEntry[]>(mockMemory)
+  const [dashboard,   setDashboard]   = useState<DashboardMetrics>(EMPTY_DASHBOARD)
+  const [runs,        setRuns]        = useState<WorkflowRun[]>([])
+  const [factories,   setFactories]   = useState<FactoryRuntime[]>([])
+  const [activity,    setActivity]    = useState<ActivityItem[]>([])
+  const [memory,      setMemory]      = useState<MemoryEntry[]>([])
   const [isLoading,   setIsLoading]   = useState(false)
   const [isPolling,   setIsPolling]   = useState(autoStart)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
@@ -99,7 +101,26 @@ export function useOsPolling({
       ])
 
       // Apply successful responses; skip failed ones (stale data stays)
-      if (dRes.ok) setDashboard(dRes.data)
+      if (dRes.ok) {
+        // Normalize backend field names to DashboardMetrics shape
+        const raw = dRes.data as Record<string, unknown>
+        setDashboard({
+          totalRunsToday:         (raw.totalRunsToday         as number) ?? 0,
+          activeWorkflows:        (raw.activeWorkflows         as number) ?? 0,
+          queueDepth:             (raw.queueDepth              as number) ?? 0,
+          memoryItems:            (raw.memoryItems             as number) ?? 0,
+          successRateToday:       ((raw.successRateToday ?? raw.successRate) as number) ?? 100,
+          tokensUsedToday:        (raw.tokensUsedToday         as number) ?? 0,
+          activeFactories:        (raw.activeFactories         as number) ?? 0,
+          errorsToday:            (raw.errorsToday             as number) ?? 0,
+          costToday:              (raw.costToday               as number) ?? 0,
+          agentRunsToday:         (raw.agentRunsToday          as number) ?? 0,
+          virtualClaudeRunsToday: (raw.virtualClaudeRunsToday  as number) ?? 0,
+          realClaudeRunsToday:    (raw.realClaudeRunsToday     as number) ?? 0,
+          claudeMode:             ((raw.claudeMode as string) ?? 'auto') as 'auto' | 'real' | 'virtual',
+          topAgents:              (raw.topAgents               as DashboardMetrics['topAgents']) ?? [],
+        })
+      }
       if (rRes.ok) setRuns(rRes.data)
       if (fRes.ok) setFactories(fRes.data)
       if (aRes.ok) setActivity(aRes.data)

@@ -48,6 +48,7 @@ export const mockSettings: OsSettings = {
   notifyOnError:       true,
   theme:               'dark',
   language:            'ja',
+  claudeMode: 'auto',
   apiKeys: {
     openai:    '',
     anthropic: '',
@@ -527,14 +528,20 @@ export const mockMemory: MemoryEntry[] = [
    ====================================================================== */
 
 export const mockDashboard: DashboardMetrics = {
-  totalRunsToday:   21,
-  activeWorkflows:  3,
-  queueDepth:       4,
-  memoryItems:      99,
-  successRateToday: 90.5,
-  tokensUsedToday:  52840,
-  activeFactories:  2,
-  errorsToday:      2,
+  totalRunsToday:         21,
+  activeWorkflows:        3,
+  queueDepth:             4,
+  memoryItems:            99,
+  successRateToday:       90.5,
+  tokensUsedToday:        52840,
+  activeFactories:        2,
+  errorsToday:            2,
+  costToday:              0.0,
+  agentRunsToday:         0,
+  virtualClaudeRunsToday: 0,
+  realClaudeRunsToday:    0,
+  claudeMode:             'auto',
+  topAgents:              [],
 }
 
 /* ======================================================================
@@ -940,26 +947,7 @@ export const mockFactorySettings: Record<string, FactorySettings> = {
 }
 
 /* ======================================================================
-   UTILITY — format helpers (used in UI components, not real API)
+   UTILITY — format helpers (canonical versions are now in lib/utils.ts)
    ====================================================================== */
 
-export function formatRelativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1)  return 'たった今'
-  if (m < 60) return `${m}分前`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}時間前`
-  return `${Math.floor(h / 24)}日前`
-}
-
-export function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
-  return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`
-}
-
-export function formatTokens(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
-  return String(n)
-}
+export { formatRelativeTime, formatDuration, formatTokens } from '@/lib/utils'

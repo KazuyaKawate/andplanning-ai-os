@@ -1,29 +1,19 @@
 'use client'
 
 /**
- * useWorkflowEngine — Workflow execution engine with runtime API boundary.
+ * useWorkflowEngine — Workflow execution engine connected to the real backend.
  *
- * ┌─────────────────────────────────────────────────────────────────────────┐
- * │  RUNTIME LAYER  — routes through api (lib/api/runtime.ts)               │
- * │    run()     → api.startRun(workflowId, { inputs })                     │
- * │    pause()   → api.pauseRun(runId)                                      │
- * │    resume()  → api.resumeRun(runId)                                     │
- * │    stop()    → api.stopRun(runId)                                       │
- * │                                                                         │
- * │  SIMULATION LAYER  — replace with WebSocket/SSE in production           │
- * │    Step advancement via setTimeout (mirrors real async step execution)  │
- * │    Output generation via getMockOutput() (replace with real output)     │
- * └─────────────────────────────────────────────────────────────────────────┘
- *
- * To switch to a real backend:
- *   1. Change lib/api/runtime.ts to use restAdapter
- *   2. Replace the two simulation useEffects with a WebSocket/SSE subscription
+ * Architecture:
+ *   run()    → api.startRun()     → backend creates run, returns runId
+ *   poll     → api.getRun(runId)  → syncs step states + output from backend
+ *   pause()  → api.pauseRun()     → backend pauses, local state follows
+ *   resume() → api.resumeRun()    → backend resumes, local state follows
+ *   stop()   → api.stopRun()      → backend stops, local state follows
  */
 
-import { useReducer, useEffect } from 'react'
+import { useReducer, useEffect, useRef } from 'react'
 import { api } from '@/lib/api/runtime'
 import type { WorkflowStep, WorkflowStatus } from '@/types'
-import { mockWorkflowSteps, getMockOutput } from '@/lib/mock'
 
 /* ======================================================================
    Public types
@@ -55,13 +45,13 @@ export type EngineState = {
    ====================================================================== */
 
 type Action =
-  | { type: 'RUN';           steps: WorkflowStep[]; inputs: Record<string, string>; runId: string }
-  | { type: 'STEP_COMPLETE'; idx: number; durationMs: number; total: number }
-  | { type: 'COMPLETE';      output: string }
+  | { type: 'RUN';    steps: WorkflowStep[]; inputs: Record<string, string>; runId: string; startedAt: string }
+  | { type: 'SYNC';   status: WorkflowStatus; steps: WorkflowStep[]; tokensUsed: number; output: string | null; endedAt: string | null }
   | { type: 'PAUSE'  }
   | { type: 'RESUME' }
-  | { type: 'STOP'   }
+  | { type: 'STOP';   endedAt: string }
   | { type: 'RESET'  }
+  | { type: 'LOG';    entry: LogEntry }
 
 /* ======================================================================
    Helpers
@@ -73,39 +63,10 @@ function mkLog(level: LogLevel, message: string): LogEntry {
   return { ts: ts(), level, message }
 }
 
-const STEP_MESSAGES: Record<string, string> = {
-  'キーワード分析':      'KW volume 1,200/mo · competition: medium · LSI terms identified',
-  'ターゲット設定':      'Persona: decision-maker · pain-point map complete',
-  'アウトライン生成':    '6-section structure locked · H2/H3 hierarchy set',
-  '本文執筆 (§1–§3)':   'Sections 1–3 written · 1,200 chars · readability: A',
-  '本文執筆 (§4–§6)':   'Sections 4–6 written · 1,240 chars · CTR hooks added',
-  'SEO最適化':          'KW density 1.8% · meta optimized · internal-link anchors set',
-  'CTA生成':            'Primary CTA: "今すぐ試す" · secondary: "資料請求"',
-  'メタ文章生成':        'Title 58 chars · description 152 chars · OG tags generated',
-  '最終レビュー':        'Readability A · SEO score 91/100 · PASS',
-  'テーマ分析':         'Theme cluster mapped · competitor content gap found',
-  '本文執筆 (前半)':     'First half written · 900 chars',
-  '本文執筆 (後半)':     'Second half written · 900 chars',
-  'メタ情報生成':        'Title / description / OG image alt generated',
-  'クエリ設計':         '12 targeted search queries · 3 intent types covered',
-  'Web情報収集':        '24 sources retrieved · 8,400 chars raw data',
-  '情報フィルタリング':  'Relevance filter applied · 18/24 sources retained (75%)',
-  '要約生成':          'Key insights extracted · 5 trend signals identified',
-  'レポート構造化':     'Executive summary + 3 sections + appendix generated',
-  'ターゲット分析':     'ICP defined · pain points × content format matrix ready',
-  '企画案生成':         '4 content concepts generated',
-  '詳細設計':          'Hooks, CTAs, and formats defined for each concept',
-  '最終仕上げ':         'Final polish · tone consistency verified',
-  '構成設計':          '5-part structure: hook → story → value → proof → CTA',
-  '台本執筆':           'Full 10-min script written · 3,200 chars',
-  'サムネイル指示作成': 'Thumbnail brief: color #0A2463, bold white text, arrow graphic',
-  'SEOタグ生成':        '15 tags generated · primary: top 3 · secondary: 12',
-  '投稿文生成':         '3-platform copy written · character limits respected',
-  'ハッシュタグ生成':   '24 hashtags · 8 per platform · optimized for reach',
-}
-
-function getStepMessage(name: string): string {
-  return STEP_MESSAGES[name] ?? `${name} complete`
+function stepsToProgress(steps: WorkflowStep[]): number {
+  if (steps.length === 0) return 0
+  const done = steps.filter(s => s.status === 'done').length
+  return Math.round((done / steps.length) * 100)
 }
 
 /* ======================================================================
@@ -139,48 +100,55 @@ function reducer(state: EngineState, action: Action): EngineState {
         steps,
         progress:   0,
         inputs:     action.inputs,
-        startedAt:  ts(),
+        startedAt:  action.startedAt,
         endedAt:    null,
         tokensUsed: 0,
         output:     null,
-        runId:      action.runId,          // assigned by api.startRun()
+        runId:      action.runId,
         logs: [
           mkLog('info', `▶ Workflow run started [${action.runId}]`),
-          mkLog('info', `[1/${steps.length}] ${steps[0].name}`),
+          mkLog('info', `Executing ${steps.length} steps via backend…`),
         ],
       }
     }
 
-    case 'STEP_COMPLETE': {
-      const { idx, durationMs, total } = action
-      const completedStep = state.steps[idx]
-      const newSteps = state.steps.map((s, i) => {
-        if (i === idx)     return { ...s, status: 'done' as const, durationMs }
-        if (i === idx + 1) return { ...s, status: 'running' as const }
-        return s
-      })
-      const progress   = Math.round(((idx + 1) / total) * 100)
-      const tokenDelta = Math.floor(Math.random() * 1800 + 400)
-      const newLogs: LogEntry[] = [
-        ...state.logs,
-        mkLog('success', `✓ [${idx + 1}/${total}] ${completedStep.name} · ${getStepMessage(completedStep.name)}`),
-        ...(idx + 1 < total
-          ? [mkLog('info', `[${idx + 2}/${total}] ${state.steps[idx + 1].name}`)]
-          : []),
-      ]
-      return { ...state, steps: newSteps, progress, logs: newLogs, tokensUsed: state.tokensUsed + tokenDelta }
-    }
+    case 'SYNC': {
+      const prev = state.steps
+      const next = action.steps
 
-    case 'COMPLETE':
+      // Build log entries for newly-completed steps
+      const newLogs: LogEntry[] = []
+      for (let i = 0; i < next.length; i++) {
+        const prevStep = prev[i]
+        const nextStep = next[i]
+        if (prevStep && prevStep.status !== 'done' && nextStep.status === 'done') {
+          newLogs.push(mkLog('success', `✓ [${i + 1}/${next.length}] ${nextStep.name}`))
+          if (i + 1 < next.length && next[i + 1].status === 'running') {
+            newLogs.push(mkLog('info', `[${i + 2}/${next.length}] ${next[i + 1].name}`))
+          }
+        } else if (prevStep && prevStep.status !== 'error' && nextStep.status === 'error') {
+          newLogs.push(mkLog('error', `✕ [${i + 1}/${next.length}] ${nextStep.name} failed`))
+        }
+      }
+
+      if (action.status === 'completed' && state.status !== 'completed') {
+        newLogs.push(mkLog('success', '✅ Workflow completed successfully'))
+      }
+      if (action.status === 'failed' && state.status !== 'failed') {
+        newLogs.push(mkLog('error', '✕ Workflow failed'))
+      }
+
       return {
         ...state,
-        status:   'completed',
-        progress: 100,
-        endedAt:  ts(),
-        output:   action.output,
-        steps:    state.steps.map(s => ({ ...s, status: 'done' as const })),
-        logs:     [...state.logs, mkLog('success', '✅ Workflow completed successfully')],
+        status:     action.status,
+        steps:      action.steps,
+        progress:   stepsToProgress(action.steps),
+        tokensUsed: action.tokensUsed,
+        output:     action.output,
+        endedAt:    action.endedAt,
+        logs:       [...state.logs, ...newLogs],
       }
+    }
 
     case 'PAUSE':
       return {
@@ -200,7 +168,7 @@ function reducer(state: EngineState, action: Action): EngineState {
       return {
         ...state,
         status:  'failed',
-        endedAt: ts(),
+        endedAt: action.endedAt,
         steps:   state.steps.map(s =>
           s.status === 'running' ? { ...s, status: 'error' as const } : s
         ),
@@ -209,6 +177,9 @@ function reducer(state: EngineState, action: Action): EngineState {
 
     case 'RESET':
       return INITIAL_STATE
+
+    case 'LOG':
+      return { ...state, logs: [...state.logs, action.entry] }
 
     default:
       return state
@@ -219,94 +190,112 @@ function reducer(state: EngineState, action: Action): EngineState {
    Hook
    ====================================================================== */
 
+const POLL_INTERVAL_MS = 2000
+
 export function useWorkflowEngine(workflowId: string) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
 
-  /* ------------------------------------------------------------------
-     SIMULATION: step advancement
-     Replace this useEffect with WebSocket/SSE subscription or polling:
-       ws.on('step_complete', e => dispatch({ type: 'STEP_COMPLETE', ...e }))
-       OR: setInterval(() => api.getRun(runId).then(r => syncState(r)), 2000)
-  ------------------------------------------------------------------ */
+  // Keep refs for polling cleanup
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const runIdRef     = useRef<string | null>(null)
+
+  function stopPolling() {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current)
+      pollTimerRef.current = null
+    }
+  }
+
+  // Poll the backend for run state while a run is active
   useEffect(() => {
-    if (state.status !== 'running') return
+    if (state.status !== 'running' && state.status !== 'paused') {
+      stopPolling()
+      return
+    }
+    if (!state.runId) return
+    runIdRef.current = state.runId
 
-    const runningIdx = state.steps.findIndex(s => s.status === 'running')
-    if (runningIdx === -1) return
+    // Already polling — nothing to do
+    if (pollTimerRef.current) return
 
-    const step = state.steps[runningIdx]
-    const demoMs = Math.min(2200, Math.max(700, (step.durationMs ?? 3000) / 8))
+    pollTimerRef.current = setInterval(async () => {
+      const rid = runIdRef.current
+      if (!rid) return
+      const res = await api.getRun(rid)
+      if (!res.ok) return
 
-    const timer = setTimeout(() => {
+      const r = res.data
       dispatch({
-        type:       'STEP_COMPLETE',
-        idx:        runningIdx,
-        durationMs: step.durationMs ?? demoMs * 8,
-        total:      state.steps.length,
+        type:       'SYNC',
+        status:     r.status as WorkflowStatus,
+        steps:      r.steps,
+        tokensUsed: r.tokensUsed ?? 0,
+        output:     r.outputSummary ?? null,
+        endedAt:    r.endedAt ?? null,
       })
-    }, demoMs)
 
-    return () => clearTimeout(timer)
-  }, [state.status, state.steps])
+      // Stop polling once terminal
+      if (r.status === 'completed' || r.status === 'failed') {
+        stopPolling()
+      }
+    }, POLL_INTERVAL_MS)
 
-  /* ------------------------------------------------------------------
-     SIMULATION: all-steps-done → emit COMPLETE
-     In production: WebSocket 'run_complete' event OR final poll result.
-  ------------------------------------------------------------------ */
-  useEffect(() => {
-    if (state.status !== 'running') return
-    const allDone = state.steps.length > 0 && state.steps.every(s => s.status === 'done')
-    if (!allDone) return
+    return stopPolling
+  }, [state.status, state.runId])
 
-    const output = getMockOutput(workflowId, state.inputs)
-    const timer = setTimeout(() => {
-      dispatch({ type: 'COMPLETE', output })
-    }, 200)
-    return () => clearTimeout(timer)
-  }, [state.status, state.steps, workflowId, state.inputs])
+  // Cleanup on unmount
+  useEffect(() => stopPolling, [])
 
   /* ------------------------------------------------------------------
-     Public API — mirrors REST Workflow Engine surface
-     Each function calls the api runtime, then updates local state.
-     Swap lib/api/runtime.ts adapter to point at REST backend.
+     Public API
   ------------------------------------------------------------------ */
 
   async function run(inputs: Record<string, string>) {
-    // Build local step list from simulation layer
-    const template = mockWorkflowSteps[workflowId] ?? []
-    const steps: WorkflowStep[] = template.map((t, i) => ({
-      id:         `s${i + 1}`,
-      name:       t.name,
-      status:     'pending',
-      durationMs: t.durationMs,
-    }))
+    stopPolling()
 
-    // RUNTIME: create run on backend → get server-assigned runId
     const res = await api.startRun(workflowId, { inputs })
-    const runId = res.ok ? res.data.runId : `run-local-${Date.now()}`
+    if (!res.ok) {
+      dispatch({ type: 'LOG', entry: mkLog('error', `Failed to start run: ${res.error}`) })
+      return
+    }
 
-    dispatch({ type: 'RUN', steps, inputs, runId })
+    const runId = res.data.runId
+
+    // Fetch initial run state to get step list
+    const runRes = await api.getRun(runId)
+    const initialSteps: WorkflowStep[] = runRes.ok ? runRes.data.steps : [
+      { id: 's1', name: 'Executing…', status: 'running' }
+    ]
+
+    dispatch({ type: 'RUN', steps: initialSteps, inputs, runId, startedAt: new Date().toISOString() })
   }
 
   async function pause() {
-    // RUNTIME: pause on backend, then update local state
-    if (state.runId) await api.pauseRun(state.runId)
+    if (state.runId) {
+      await api.pauseRun(state.runId)
+    }
+    stopPolling()
     dispatch({ type: 'PAUSE' })
   }
 
   async function resume() {
-    // RUNTIME: resume on backend, then update local state
-    if (state.runId) await api.resumeRun(state.runId)
+    if (state.runId) {
+      await api.resumeRun(state.runId)
+    }
     dispatch({ type: 'RESUME' })
   }
 
   async function stop() {
-    // RUNTIME: stop on backend, then update local state
-    if (state.runId) await api.stopRun(state.runId)
-    dispatch({ type: 'STOP' })
+    if (state.runId) {
+      await api.stopRun(state.runId)
+    }
+    stopPolling()
+    dispatch({ type: 'STOP', endedAt: new Date().toISOString() })
   }
 
   function reset() {
+    stopPolling()
+    runIdRef.current = null
     dispatch({ type: 'RESET' })
   }
 

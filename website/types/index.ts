@@ -95,6 +95,7 @@ export type WorkflowRun = {
   outputSummary?: string
   model:       string
   tokensUsed?: number
+  costUsd?:    number
 }
 
 export type Workflow = {
@@ -125,7 +126,7 @@ export type FactoryRuntime = {
   errorCount:   number
   lastActivity: string
   memoryItems:  number
-  workflowIds:  string[]
+  workflowIds?: string[]
 }
 
 export type QueueItem = {
@@ -159,7 +160,15 @@ export type MemoryEntry = {
   model:       string
 }
 
+export type AgentStatItem = {
+  agentId:   string
+  agentName: string
+  icon:      string
+  runsToday: number
+}
+
 export type DashboardMetrics = {
+  // Workflow stats
   totalRunsToday:    number
   activeWorkflows:   number
   queueDepth:        number
@@ -168,6 +177,13 @@ export type DashboardMetrics = {
   tokensUsedToday:   number
   activeFactories:   number
   errorsToday:       number
+  costToday:         number
+  // Agent stats
+  agentRunsToday:         number
+  virtualClaudeRunsToday: number
+  realClaudeRunsToday:    number
+  claudeMode:             'auto' | 'real' | 'virtual'
+  topAgents:              AgentStatItem[]
 }
 
 export type ModelOption = {
@@ -183,7 +199,8 @@ export type WorkflowInputField = {
   label:       string
   placeholder: string
   required:    boolean
-  type:        'text' | 'textarea'
+  type:        'text' | 'textarea' | 'select'
+  options?:    string[]
 }
 
 export type KnowledgeType = 'prompt' | 'template' | 'reference' | 'example'
@@ -228,9 +245,123 @@ export type OsSettings = {
   notifyOnError:     boolean
   theme:             'dark' | 'light' | 'system'
   language:          'ja' | 'en'
+  claudeMode:        'auto' | 'real' | 'virtual'
   apiKeys: {
     openai:    string
     anthropic: string
     google:    string
   }
+}
+
+export interface VirtualAgent {
+  id:                string
+  name:              string
+  nameJa:            string
+  role:              string
+  category?:         string
+  description:       string
+  icon:              string
+  preferredProvider: string
+  preferredModel?:   string
+  memoryScope:       string
+  outputFormat:      string
+  routingKeywords:   string[]
+  priority:          number
+  version:           number
+  isEnabled:         boolean
+  isBuiltin:         boolean
+  createdAt:         string
+  updatedAt?:        string
+  totalRuns?:        number
+  successRate?:      number
+  lastRunAt?:        string | null
+}
+
+export interface VirtualAgentDetail extends VirtualAgent {
+  systemPrompt: string
+  updatedAt:    string
+  totalRuns:    number
+  successRate:  number
+  lastRunAt:    string | null
+}
+
+export interface AgentCreateRequest {
+  id:                string
+  name:              string
+  nameJa:            string
+  role:              string
+  category?:         string
+  description?:      string
+  icon?:             string
+  systemPrompt:      string
+  preferredProvider?: string
+  preferredModel?:   string
+  memoryScope?:      string
+  outputFormat?:     string
+  routingKeywords:   string[]
+  priority?:         number
+}
+
+export interface AgentUpdateRequest {
+  name?:              string
+  nameJa?:            string
+  role?:              string
+  category?:          string
+  description?:       string
+  icon?:              string
+  systemPrompt?:      string
+  preferredProvider?: string
+  preferredModel?:    string
+  memoryScope?:       string
+  outputFormat?:      string
+  routingKeywords?:   string[]
+  priority?:          number
+  isEnabled?:         boolean
+}
+
+export interface AgentTestResult {
+  agentId:      string
+  agentName:    string
+  modelUsed:    string
+  isRealClaude: boolean
+  output:       string
+  tokensUsed:   number
+  costUsd:      number
+  durationMs:   number
+  success:      boolean
+  executionId:  string
+}
+
+export interface AgentRunResult {
+  agentId:      string
+  agentName:    string
+  modelUsed:    string
+  isRealClaude: boolean
+  output:       string
+  tokensUsed:   number
+  costUsd:      number
+  executionId:  string
+}
+
+export interface ChatSession {
+  id: string
+  factoryId?: string
+  title: string
+  model: string
+  totalTokens: number
+  totalCost: number
+  createdAt: string
+  updatedAt: string
+  messageCount: number
+}
+
+export interface ChatMessage {
+  id: string
+  sessionId: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  model?: string
+  tokens?: number
+  costUsd?: number
+  createdAt: string
 }
