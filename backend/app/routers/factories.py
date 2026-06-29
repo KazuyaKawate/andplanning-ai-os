@@ -14,14 +14,21 @@ from app.schemas import (
 router = APIRouter(tags=["factories"])
 
 
-def _factory_out(f: Factory, wf_count: int, run_count: int, mem_count: int) -> FactoryOut:
+def _factory_out(
+    f: Factory,
+    wf_count: int,
+    run_count: int,
+    queued_count: int,
+    error_count: int,
+    mem_count: int,
+) -> FactoryOut:
     from datetime import datetime, timezone
     last = f.updated_at or datetime.now(timezone.utc)
     return FactoryOut(
         id=f.id, name=f.name, nameJa=f.name_ja, icon=f.icon,
         accentColor=f.accent_color, status=f.status,
         activeWorkflows=wf_count, completedToday=run_count,
-        queuedTasks=0, errorCount=0,
+        queuedTasks=queued_count, errorCount=error_count,
         memoryItems=mem_count,
         lastActivity=last.isoformat(),
     )
@@ -34,10 +41,19 @@ async def get_factories(db: AsyncSession = Depends(get_db)):
 
     out = []
     for f in factories:
-        wf_res  = await db.execute(select(func.count()).select_from(Workflow).where(Workflow.factory_id == f.id))
-        run_res = await db.execute(select(func.count()).select_from(WorkflowRun).where(WorkflowRun.factory_id == f.id, WorkflowRun.status == "completed"))
-        mem_res = await db.execute(select(func.count()).select_from(MemoryEntry).where(MemoryEntry.factory_id == f.id))
-        out.append(_factory_out(f, wf_res.scalar() or 0, run_res.scalar() or 0, mem_res.scalar() or 0))
+        wf_res      = await db.execute(select(func.count()).select_from(Workflow).where(Workflow.factory_id == f.id))
+        run_res     = await db.execute(select(func.count()).select_from(WorkflowRun).where(WorkflowRun.factory_id == f.id, WorkflowRun.status == "completed"))
+        queued_res  = await db.execute(select(func.count()).select_from(WorkflowRun).where(WorkflowRun.factory_id == f.id, WorkflowRun.status.in_(["running", "queued"])))
+        error_res   = await db.execute(select(func.count()).select_from(WorkflowRun).where(WorkflowRun.factory_id == f.id, WorkflowRun.status == "failed"))
+        mem_res     = await db.execute(select(func.count()).select_from(MemoryEntry).where(MemoryEntry.factory_id == f.id))
+        out.append(_factory_out(
+            f,
+            wf_count=wf_res.scalar() or 0,
+            run_count=run_res.scalar() or 0,
+            queued_count=queued_res.scalar() or 0,
+            error_count=error_res.scalar() or 0,
+            mem_count=mem_res.scalar() or 0,
+        ))
     return out
 
 

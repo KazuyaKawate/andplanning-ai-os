@@ -29,10 +29,11 @@ from app.models import Workflow, WorkflowRun, Factory, ActivityItem, OsSettingsR
 from app.schemas import (
     StartRunRequest, StartRunResponse, RunControlResponse, WorkflowRunOut, WorkflowStep,
 )
-from app.services.ai_router import resolve_model, provider_for
+from app.services.ai_router import resolve_model, provider_for, calculate_cost_usd
 from app.services.openai_svc import stream_openai
 from app.services.anthropic_svc import stream_anthropic
 from app.services.gemini_svc import stream_gemini
+from app.services.retry import stream_with_fallback
 
 router = APIRouter(tags=["runs"])
 
@@ -51,14 +52,23 @@ def _run_out(r: WorkflowRun) -> WorkflowRunOut:
         inputSummary=r.input_summary,
         outputSummary=r.output_summary,
         tokensUsed=r.tokens_used,
+        costUsd=r.cost_usd,
         steps=steps,
     )
 
 
 async def _get_settings_row(db: AsyncSession) -> OsSettingsRow:
+    from app.config import settings as env_cfg
     res = await db.execute(select(OsSettingsRow).where(OsSettingsRow.id == "global"))
-    row = res.scalars().first()
-    return row or OsSettingsRow(id="global", default_model="gpt-4o-mini", api_key_openai="", api_key_anthropic="", api_key_google="")
+    row = res.scalars().first() or OsSettingsRow(
+        id="global", default_model="gpt-4o-mini",
+        api_key_openai="", api_key_anthropic="", api_key_google="",
+    )
+    # .env keys are fallback when DB is empty
+    row.api_key_openai    = row.api_key_openai    or env_cfg.openai_api_key
+    row.api_key_anthropic = row.api_key_anthropic or env_cfg.anthropic_api_key
+    row.api_key_google    = row.api_key_google    or env_cfg.google_api_key
+    return row
 
 
 # ---------------------------------------------------------------------------
@@ -103,48 +113,95 @@ async def _execute_run(run_id: str) -> None:
         from app.schemas import ChatMessage
         messages = [ChatMessage(role="user", content=user_content)]
 
-        # Collect streamed output
+        # Collect streamed output — use fallback chain so a failed provider
+        # automatically retries with the next available provider.
         output_parts: list[str] = []
         total_tokens = 0
 
         try:
-            if provider == "anthropic":
-                gen = stream_anthropic(messages, model, cfg.api_key_anthropic, system_prompt=system)
-            elif provider == "google":
-                gen = stream_gemini(messages, model, cfg.api_key_google)
-            else:
-                gen = stream_openai(messages, model, cfg.api_key_openai)
+            model, gen = await stream_with_fallback(messages, model, cfg, system)
 
             import json as _json
+            from sqlalchemy.orm.attributes import flag_modified
+
+            step_count  = len(run.steps or [])
+            current_step_idx = 0
+
+            async def _advance_step(idx: int) -> None:
+                """Mark step idx as done, idx+1 as running, flush to DB."""
+                new_steps = []
+                for i, s in enumerate(run.steps or []):
+                    if i < idx:
+                        new_steps.append(dict(s, status="done"))
+                    elif i == idx:
+                        new_steps.append(dict(s, status="done"))
+                    elif i == idx + 1:
+                        new_steps.append(dict(s, status="running"))
+                    else:
+                        new_steps.append(s)
+                run.steps = new_steps
+                flag_modified(run, "steps")
+                await db.commit()
+
+            done = False
+            char_count = 0
+            # Threshold: advance a step every (estimated_total / step_count) chars
+            step_threshold = 300  # advance a step every ~300 output chars
+
             async for chunk in gen:
-                if chunk.startswith("data: "):
-                    raw = chunk[6:].strip()
+                # Each yielded string may contain multiple SSE events separated by \n\n
+                for part in chunk.split("\n\n"):
+                    part = part.strip()
+                    if not part:
+                        continue
+                    if not part.startswith("data: "):
+                        continue
+                    raw = part[6:].strip()
                     if raw == "[DONE]":
+                        done = True
                         break
                     try:
                         parsed = _json.loads(raw)
                         if "content" in parsed:
-                            output_parts.append(parsed["content"])
+                            content = parsed["content"]
+                            output_parts.append(content)
+                            char_count += len(content)
+                            # Advance steps as output accumulates (keep last step as running)
+                            next_idx = min(
+                                int(char_count / step_threshold),
+                                step_count - 1,
+                            )
+                            if next_idx > current_step_idx and step_count > 1:
+                                await _advance_step(current_step_idx)
+                                current_step_idx = next_idx
                         elif "error" in parsed:
-                            run.status = "failed"
+                            run.status   = "failed"
+                            run.ended_at = datetime.now(timezone.utc)
+                            run.steps = [
+                                dict(s, status="error") if s["status"] == "running" else s
+                                for s in (run.steps or [])
+                            ]
+                            flag_modified(run, "steps")
                             await db.commit()
                             return
                     except Exception:
                         pass
+                if done:
+                    break
 
             output = "".join(output_parts)
             total_tokens = max(100, len(output) // 4)
+            cost = calculate_cost_usd(model, total_tokens)
 
-            # Mark steps done
-            steps = run.steps or []
-            for s in steps:
-                s["status"] = "done"
+            # Mark all steps done
+            run.steps = [dict(s, status="done") for s in (run.steps or [])]
+            flag_modified(run, "steps")
 
             run.status        = "completed"
             run.ended_at      = datetime.now(timezone.utc)
             run.output_summary = output[:500] if output else "(出力なし)"
             run.tokens_used   = total_tokens
-            run.steps         = steps
+            run.cost_usd      = cost
             run.model         = model
 
             # Update workflow stats
