@@ -591,3 +591,72 @@ async def cancel_task(
     await db.commit()
     await db.refresh(task)
     return _task_out(task)
+@router.post("/tasks/claim-next")
+async def claim_next_task(
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessTask)
+        .where(BusinessTask.status == "todo")
+        .order_by(BusinessTask.created_at.asc())
+        .limit(1)
+    )
+
+    task = result.scalar_one_or_none()
+
+    if task is None:
+        return {"status": "no_task", "task": None}
+
+    task.status = "in_progress"
+
+    await db.commit()
+    await db.refresh(task)
+
+    return {
+        "status": "claimed",
+        "task": task,
+    }
+from app.models import BusinessTask
+from app.database import get_db
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends, HTTPException
+@router.post("/business-tasks/run-next")
+async def run_next_business_task(
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessTask)
+        .where(BusinessTask.status == "todo")
+        .order_by(BusinessTask.created_at.asc())
+        .limit(1)
+    )
+
+    task = result.scalar_one_or_none()
+
+    if task is None:
+        return {
+            "status": "no_task",
+            "message": "No todo business task found",
+        }
+
+    task.status = "in_progress"
+    await db.commit()
+    await db.refresh(task)
+
+    # 今はAI実行の代わりに仮の実行結果を返す
+    execution_result = {
+        "task_id": task.id,
+        "title": task.title,
+        "result": f"{task.title} の実行準備が完了しました",
+    }
+
+    task.status = "done"
+    await db.commit()
+    await db.refresh(task)
+
+    return {
+        "status": "executed",
+        "task": task,
+        "execution_result": execution_result,
+    }

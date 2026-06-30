@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import Integer
 
 
 # ---------------------------------------------------------------------------
@@ -773,3 +774,77 @@ class ExecutorPlanRequest(BaseModel):
 class ExecutorPatchRequest(BaseModel):
     target_file:   str          # which file to patch
     extra_context: str = ""
+class BusinessClientCreate(BaseModel):
+    name: str
+    company: str | None = None
+    email: str | None = None
+    phone: str | None = None
+
+
+class BusinessClientOut(BaseModel):
+    id: int
+    uuid: str
+    name: str
+    company: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    status: str
+
+    model_config = ConfigDict(from_attributes=True)
+class BusinessClientUpdate(BaseModel):
+    name: str | None = None
+    company: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    status: str | None = None    
+class BusinessDealCreate(BaseModel):
+    client_id: int
+    title: str
+    status: str | None = "lead"
+    amount: float |None = 0
+    expected_close_date: datetime | None = None
+    memo: str | None = None
+
+
+class BusinessDealUpdate(BaseModel):
+    title: str | None = None
+    status: str | None = None
+    amount: float | None = None
+    expected_close_date: datetime | None = None
+    memo: str | None = None
+
+
+class BusinessDealOut(BaseModel):
+    id: int
+    uuid: str
+    client_id: int
+    title: str
+    status: str
+    amount: float | None = None
+    expected_close_date: datetime | None = None
+    memo: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+class BusinessTaskCreate(BaseModel):
+    deal_id: int
+    title: str
+    description: str | None = None
+    status: str = "todo"
+    due_date: datetime | None = None
+
+
+class BusinessTaskUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    status: str | None = None
+    due_date: datetime | None = None
+
+
+class BusinessTaskOut(BusinessTaskCreate):
+    id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)  
+class BusinessWorkflowRequest(BaseModel):
+    deal_id: int
+    workflow_type: str = "standard_sales"             

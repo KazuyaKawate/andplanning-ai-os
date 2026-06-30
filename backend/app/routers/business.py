@@ -1,0 +1,396 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from app.database import get_db
+from app.models import (
+    BusinessClient,
+    BusinessDeal,
+    BusinessTask,
+)
+from app.schemas import (
+    BusinessClientCreate,
+    BusinessClientOut,
+    BusinessClientUpdate,
+    BusinessDealCreate,
+    BusinessDealOut,
+    BusinessDealUpdate,
+    BusinessTaskCreate,
+    BusinessTaskOut,
+    BusinessTaskUpdate,
+    BusinessWorkflowRequest,
+)
+
+router = APIRouter(prefix="/business", tags=["Business Engine"])
+
+
+@router.get("/health")
+async def business_health():
+    return {"status": "ok", "module": "Business Engine Phase 1"}
+
+
+# -------------------------
+# Clients
+# -------------------------
+
+@router.post("/clients", response_model=BusinessClientOut)
+async def create_client(
+    data: BusinessClientCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    client = BusinessClient(**data.model_dump(), status="lead")
+    db.add(client)
+    await db.commit()
+    await db.refresh(client)
+    return client
+
+
+@router.get("/clients", response_model=list[BusinessClientOut])
+async def list_clients(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(BusinessClient))
+    return result.scalars().all()
+
+
+@router.get("/clients/{client_id}", response_model=BusinessClientOut)
+async def get_client(
+    client_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessClient).where(BusinessClient.id == client_id)
+    )
+    client = result.scalar_one_or_none()
+
+    if client is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    return client
+
+
+@router.patch("/clients/{client_id}", response_model=BusinessClientOut)
+async def update_client(
+    client_id: int,
+    data: BusinessClientUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessClient).where(BusinessClient.id == client_id)
+    )
+    client = result.scalar_one_or_none()
+
+    if client is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    update_data = data.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(client, key, value)
+
+    await db.commit()
+    await db.refresh(client)
+
+    return client
+
+
+@router.delete("/clients/{client_id}")
+async def delete_client(
+    client_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessClient).where(BusinessClient.id == client_id)
+    )
+    client = result.scalar_one_or_none()
+
+    if client is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    await db.delete(client)
+    await db.commit()
+
+    return {"status": "deleted", "id": client_id}
+
+
+# -------------------------
+# Deals
+# -------------------------
+
+@router.post("/deals", response_model=BusinessDealOut)
+async def create_deal(
+    data: BusinessDealCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    deal = BusinessDeal(**data.model_dump())
+    db.add(deal)
+    await db.commit()
+    await db.refresh(deal)
+    return deal
+
+
+@router.get("/deals", response_model=list[BusinessDealOut])
+async def list_deals(
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(BusinessDeal))
+    return result.scalars().all()
+
+
+@router.get("/deals/{deal_id}", response_model=BusinessDealOut)
+async def get_deal(
+    deal_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessDeal).where(BusinessDeal.id == deal_id)
+    )
+    deal = result.scalar_one_or_none()
+
+    if deal is None:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    return deal
+
+
+@router.patch("/deals/{deal_id}", response_model=BusinessDealOut)
+async def update_deal(
+    deal_id: int,
+    data: BusinessDealUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessDeal).where(BusinessDeal.id == deal_id)
+    )
+    deal = result.scalar_one_or_none()
+
+    if deal is None:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    update_data = data.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(deal, key, value)
+
+    await db.commit()
+    await db.refresh(deal)
+    return deal
+
+
+@router.delete("/deals/{deal_id}")
+async def delete_deal(
+    deal_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessDeal).where(BusinessDeal.id == deal_id)
+    )
+    deal = result.scalar_one_or_none()
+
+    if deal is None:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    await db.delete(deal)
+    await db.commit()
+
+    return {"status": "deleted", "id": deal_id}
+
+
+# -------------------------
+# Tasks
+# -------------------------
+
+@router.post("/tasks", response_model=BusinessTaskOut)
+async def create_task(
+    data: BusinessTaskCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    task = BusinessTask(**data.model_dump())
+
+    db.add(task)
+    await db.commit()
+    await db.refresh(task)
+
+    return task
+
+
+@router.get("/tasks", response_model=list[BusinessTaskOut])
+async def list_tasks(
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(BusinessTask))
+    return result.scalars().all()
+
+
+@router.get("/tasks/next/todo")
+async def get_next_todo_task(
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessTask)
+        .where(BusinessTask.status == "todo")
+        .order_by(BusinessTask.created_at.asc())
+        .limit(1)
+    )
+
+    task = result.scalar_one_or_none()
+
+    if task is None:
+        return {"status": "no_task", "task": None}
+
+    return {
+        "status": "found",
+        "task": task,
+    }
+
+
+@router.post("/tasks/claim-next")
+async def claim_next_task(
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessTask)
+        .where(BusinessTask.status == "todo")
+        .order_by(BusinessTask.created_at.asc())
+        .limit(1)
+    )
+
+    task = result.scalar_one_or_none()
+
+    if task is None:
+        return {"status": "no_task", "task": None}
+
+    task.status = "in_progress"
+
+    await db.commit()
+    await db.refresh(task)
+
+    return {
+        "status": "claimed",
+        "task": task,
+    }
+
+
+@router.get("/tasks/{task_id}", response_model=BusinessTaskOut)
+async def get_task(
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessTask).where(BusinessTask.id == task_id)
+    )
+
+    task = result.scalar_one_or_none()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    return task
+
+
+@router.patch("/tasks/{task_id}/status", response_model=BusinessTaskOut)
+async def update_task_status(
+    task_id: int,
+    status: str,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessTask).where(BusinessTask.id == task_id)
+    )
+    task = result.scalar_one_or_none()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # status表記を統一
+    if status == "in progress":
+        status = "in_progress"
+
+    task.status = status
+
+    await db.commit()
+    await db.refresh(task)
+
+    return task
+
+
+@router.delete("/tasks/{task_id}")
+async def delete_task(
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessTask).where(BusinessTask.id == task_id)
+    )
+
+    task = result.scalar_one_or_none()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    await db.delete(task)
+    await db.commit()
+
+    return {
+        "status": "deleted",
+        "id": task_id,
+    }
+
+
+# -------------------------
+# Workflows
+# -------------------------
+
+@router.post("/workflows/start")
+async def start_business_workflow(
+    data: BusinessWorkflowRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(BusinessDeal).where(BusinessDeal.id == data.deal_id)
+    )
+    deal = result.scalar_one_or_none()
+
+    if deal is None:
+        raise HTTPException(status_code=404, detail="Deal not found")
+
+    existing = await db.execute(
+        select(BusinessTask).where(BusinessTask.deal_id == deal.id)
+    )
+    existing_tasks = existing.scalars().all()
+
+    if existing_tasks:
+        return {
+            "status": "already_started",
+            "deal_id": deal.id,
+            "existing_tasks": existing_tasks,
+        }
+
+    templates = [
+        "初回ヒアリング",
+        "必要資料の確認",
+        "提案内容の作成",
+        "見積・条件整理",
+        "次回連絡",
+    ]
+
+    created_tasks = []
+
+    for title in templates:
+        task = BusinessTask(
+            deal_id=deal.id,
+            title=title,
+            description=f"{deal.title} の自動生成タスク",
+            status="todo",
+        )
+        db.add(task)
+        created_tasks.append(task)
+
+    await db.commit()
+
+    for task in created_tasks:
+        await db.refresh(task)
+
+    return {
+        "status": "workflow_started",
+        "deal_id": deal.id,
+        "created_tasks": created_tasks,
+    }

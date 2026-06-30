@@ -43,6 +43,7 @@ from app.routers import biz_licenses, biz_marketplace, biz_assets
 from app.routers import biz_library, biz_pricing, biz_revenue, biz_knowledge
 # Business Engine Phase 1
 from app.routers import orgs as orgs_router
+from app.routers import business as business_router
 # AIOS Executor Phase 1
 from app.routers import executor as executor_router
 
@@ -156,6 +157,7 @@ app.include_router(biz_revenue.router,         prefix=PREFIX)
 app.include_router(biz_knowledge.router,       prefix=PREFIX)
 # Business Engine Phase 1
 app.include_router(orgs_router.router,         prefix=PREFIX)
+app.include_router(business_router.router, prefix=PREFIX)
 # AIOS Executor Phase 1
 app.include_router(executor_router.router,     prefix=PREFIX)
 

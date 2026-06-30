@@ -23,7 +23,21 @@ def _uuid() -> str:
 
 
 # ---------------------------------------------------------------------------
-# Factory
+#Factory
+class BusinessClient(Base):
+    __tablename__ = "business_clients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String, default=_uuid, unique=True, nullable=False)
+
+    name = Column(String, nullable=False)
+    company = Column(String)
+    email = Column(String)
+    phone = Column(String)
+
+    status = Column(String, default="lead")
+
+    created_at = Column(DateTime(timezone=True), default=_now)
 # ---------------------------------------------------------------------------
 
 class Factory(Base):
@@ -632,3 +646,34 @@ class ExecutorTask(Base):
     updated_at     = Column(DateTime(timezone=True), default=_now, onupdate=_now)
 
     patch = relationship("DevPatch")
+class BusinessDeal(Base):
+    __tablename__ = "business_deals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String, default=_uuid, unique=True, nullable=False)
+
+    client_id = Column(Integer, ForeignKey("business_clients.id"), nullable=False)
+
+    title = Column(String, nullable=False)
+    status = Column(String, default="lead")
+    amount = Column(Float, default=0)
+    expected_close_date = Column(DateTime(timezone=True), nullable=True)
+    memo = Column(String, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), default=_now)
+class BusinessTask(Base):
+    __tablename__ = "business_tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    deal_id = Column(
+        Integer,
+        ForeignKey("business_deals.id"),
+        nullable=False,
+    )
+
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(String, default="todo")
+    due_date = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_now)
