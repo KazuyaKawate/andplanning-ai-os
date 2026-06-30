@@ -181,4 +181,116 @@ export const restAdapter: OsApiAdapter = {
   /** GET /api/models */
   getModels: () =>
     request('GET', '/api/models'),
+
+  /* ── Chat Sessions ────────────────────────────────────────────────── */
+
+  /** GET /api/chat-sessions?limit=N */
+  getChatSessions: ({ limit } = {}) =>
+    request('GET', `/api/chat-sessions${qs({ limit })}`),
+
+  /** POST /api/chat-sessions  body: { factoryId?, title? } */
+  createChatSession: (req) =>
+    request('POST', '/api/chat-sessions', req),
+
+  /** GET /api/chat-sessions/:id/messages */
+  getChatMessages: (sessionId) =>
+    request('GET', `/api/chat-sessions/${encodeURIComponent(sessionId)}/messages`),
+
+  /** DELETE /api/chat-sessions/:id */
+  deleteChatSession: (sessionId) =>
+    request('DELETE', `/api/chat-sessions/${encodeURIComponent(sessionId)}`),
+
+  /** GET /api/agents */
+  getAgents: () => request('GET', '/api/agents'),
+
+  /** GET /api/agents/:id */
+  getAgent: (agentId) =>
+    request('GET', `/api/agents/${encodeURIComponent(agentId)}`),
+
+  /** POST /api/agents */
+  createAgent: (req) =>
+    request('POST', '/api/agents', req),
+
+  /** PATCH /api/agents/:id */
+  patchAgent: (agentId, req) =>
+    request('PATCH', `/api/agents/${encodeURIComponent(agentId)}`, req),
+
+  /** DELETE /api/agents/:id (soft-delete) */
+  deleteAgent: (agentId) =>
+    request('DELETE', `/api/agents/${encodeURIComponent(agentId)}`),
+
+  /** POST /api/agents/:id/enable */
+  enableAgent: (agentId) =>
+    request('POST', `/api/agents/${encodeURIComponent(agentId)}/enable`),
+
+  /** POST /api/agents/:id/disable */
+  disableAgent: (agentId) =>
+    request('POST', `/api/agents/${encodeURIComponent(agentId)}/disable`),
+
+  /** POST /api/agents/:id/test */
+  testAgent: (agentId, input) =>
+    request('POST', `/api/agents/${encodeURIComponent(agentId)}/test`, { input }),
+
+  /* ── Virtual Claude Dev ───────────────────────────────────────────── */
+
+  /** GET /api/dev/files */
+  getDevFiles: () => request('GET', '/api/dev/files'),
+
+  /** POST /api/dev/inspect */
+  devInspect: (path) => request('POST', '/api/dev/inspect', { path }),
+
+  /** GET /api/dev/patches?status=X */
+  getDevPatches: (status) =>
+    request('GET', `/api/dev/patches${status ? `?status=${encodeURIComponent(status)}` : ''}`),
+
+  /** POST /api/dev/apply */
+  applyPatch: (patchId) =>
+    request('POST', '/api/dev/apply', { patchId, confirmed: true }),
+
+  /** POST /api/dev/reject */
+  rejectPatch: (patchId) =>
+    request('POST', '/api/dev/reject', { patchId, confirmed: true }),
+
+  /** GET /api/dev/history */
+  getDevHistory: (limit) =>
+    request('GET', `/api/dev/history${limit ? `?limit=${limit}` : ''}`),
+
+  /* ── Auto Debugger ────────────────────────────────────────────────── */
+
+  /** GET /api/debug/status */
+  getDebugStatus: () => request('GET', '/api/debug/status'),
+
+  /** GET /api/debug/logs?limit=N */
+  getDebugLogs: (limit) =>
+    request('GET', `/api/debug/logs${limit ? `?limit=${limit}` : ''}`),
+
+  /** GET /api/debug/history?limit=N */
+  getDebugHistory: (limit) =>
+    request('GET', `/api/debug/history${limit ? `?limit=${limit}` : ''}`),
+
+  /* ── Virtual Claude Team ──────────────────────────────────────────── */
+
+  getTeamStatus: () => request('GET', '/api/team/status'),
+
+  getTeamTasks: ({ status, agentId, sessionId, limit } = {}) =>
+    request('GET', `/api/team/tasks${qs({ status, agent_id: agentId, session_id: sessionId, limit })}`),
+
+  createTeamTask: (req) =>
+    request('POST', '/api/team/tasks', {
+      title: req.title, description: req.description ?? '',
+      agent_id: req.agentId, session_id: req.sessionId,
+      file_path: req.filePath, priority: req.priority ?? 5,
+    }),
+
+  updateTeamTask: (taskId, req) =>
+    request('PATCH', `/api/team/tasks/${encodeURIComponent(taskId)}`, req),
+
+  getTeamMessages: ({ sessionId, limit } = {}) =>
+    request('GET', `/api/team/messages${qs({ session_id: sessionId, limit })}`),
+
+  getTeamSessions: (limit) =>
+    request('GET', `/api/team/sessions${limit ? `?limit=${limit}` : ''}`),
+
+  getTeamSession: (sessionId) =>
+    request('GET', `/api/team/sessions/${encodeURIComponent(sessionId)}`),
 }

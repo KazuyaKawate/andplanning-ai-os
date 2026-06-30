@@ -21,18 +21,22 @@ from app.services.ai_router import resolve_model, provider_for, FACTORY_DEFAULT_
 from app.services.openai_svc import stream_openai
 from app.services.anthropic_svc import stream_anthropic
 from app.services.gemini_svc import stream_gemini
+from app.services.retry import stream_with_fallback
 
 router = APIRouter(tags=["chat"])
 
 
 async def _get_settings(db: AsyncSession) -> OsSettingsRow:
+    from app.config import settings as env_cfg
     result = await db.execute(select(OsSettingsRow).where(OsSettingsRow.id == "global"))
-    row = result.scalars().first()
-    if not row:
-        return OsSettingsRow(
-            id="global", api_key_openai="", api_key_anthropic="", api_key_google="",
-            default_model="claude-sonnet-4-6", fallback_model="gpt-4o-mini",
-        )
+    row = result.scalars().first() or OsSettingsRow(
+        id="global", api_key_openai="", api_key_anthropic="", api_key_google="",
+        default_model="claude-sonnet-4-6", fallback_model="gpt-4o-mini",
+    )
+    # .env keys are fallback when DB is empty
+    row.api_key_openai    = row.api_key_openai    or env_cfg.openai_api_key
+    row.api_key_anthropic = row.api_key_anthropic or env_cfg.anthropic_api_key
+    row.api_key_google    = row.api_key_google    or env_cfg.google_api_key
     return row
 
 
@@ -122,7 +126,7 @@ async def chat_gemini(req: ChatRequest, db: AsyncSession = Depends(get_db)):
         requested_model=req.model,
     )
     if provider_for(model) != "google":
-        model = "gemini-2.0-flash"
+        model = "gemini-2.5-flash"
 
     return StreamingResponse(
         stream_gemini(req.messages, model, cfg.api_key_google, req.temperature, req.max_tokens),
@@ -136,24 +140,18 @@ async def chat_gemini(req: ChatRequest, db: AsyncSession = Depends(get_db)):
 
 @router.post("/chat")
 async def chat_auto(req: ChatRequest, db: AsyncSession = Depends(get_db)):
-    """Route to the appropriate provider automatically."""
+    """Route to the appropriate provider automatically with fallback chain."""
     cfg     = await _get_settings(db)
     factory = await _get_factory(db, req.factory_id)
 
-    model = resolve_model(
+    model  = resolve_model(
         factory_id=req.factory_id,
         factory_preferred_model=factory.preferred_model if factory else None,
         os_default_model=cfg.default_model,
         requested_model=req.model,
     )
-    provider = provider_for(model)
-    system   = factory.system_prompt if factory else ""
+    system = factory.system_prompt if factory else ""
 
-    if provider == "anthropic":
-        gen = stream_anthropic(req.messages, model, cfg.api_key_anthropic, req.temperature, req.max_tokens, system)
-    elif provider == "google":
-        gen = stream_gemini(req.messages, model, cfg.api_key_google, req.temperature, req.max_tokens)
-    else:
-        gen = stream_openai(req.messages, model, cfg.api_key_openai, req.temperature, req.max_tokens)
+    _model_used, gen = await stream_with_fallback(req.messages, model, cfg, system)
 
     return StreamingResponse(gen, headers=_sse_headers())

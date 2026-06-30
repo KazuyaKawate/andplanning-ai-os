@@ -1,6 +1,12 @@
 """
 Google Gemini chat service — streaming SSE generator.
-Uses asyncio.to_thread because google-generativeai SDK is synchronous.
+
+Uses the modern `google-genai` SDK (async client). This SDK talks to the native
+generativelanguage endpoint and authenticates with the `x-goog-api-key` header,
+so it works with BOTH the legacy `AIza...` Standard keys and the current
+`AQ.Ab...` Auth keys issued by Google AI Studio. It never routes through the
+OpenAI-compatible transport / `Authorization: Bearer`, which is what makes
+`AQ.` keys return 401/400.
 """
 from __future__ import annotations
 
@@ -9,6 +15,8 @@ import json
 from typing import AsyncGenerator
 
 from app.schemas import ChatMessage
+
+_RETRY_DELAYS = [2.0, 5.0, 10.0]  # seconds between 429 retries
 
 
 async def stream_gemini(
@@ -24,49 +32,68 @@ async def stream_gemini(
         return
 
     try:
-        import google.generativeai as genai
-        from google.generativeai.types import GenerationConfig
+        from google import genai
+        from google.genai import types
 
-        genai.configure(api_key=api_key)
-        gemini_model = genai.GenerativeModel(
-            model_name=model,
-            generation_config=GenerationConfig(
-                temperature=temperature,
-                max_output_tokens=max_tokens,
-            ),
-        )
+        # Native Gemini API (generativelanguage). No key-prefix assumption:
+        # AQ. / AIza both authenticate via the x-goog-api-key header.
+        client = genai.Client(api_key=api_key)
 
-        # Build history for multi-turn (Gemini uses 'user'/'model' roles)
-        history = []
-        last_user_content = ""
+        # System prompts → system_instruction; user/assistant turns → contents.
+        system_parts: list[str] = []
+        contents: list[types.Content] = []
         for m in messages:
             if m.role == "system":
-                # Inject system prompt as a user turn at the start
-                history.append({"role": "user",  "parts": [m.content]})
-                history.append({"role": "model", "parts": ["了解しました。"]})
+                system_parts.append(m.content)
             elif m.role == "user":
-                last_user_content = m.content
-                history.append({"role": "user",  "parts": [m.content]})
+                contents.append(
+                    types.Content(role="user", parts=[types.Part.from_text(text=m.content)])
+                )
             elif m.role == "assistant":
-                history.append({"role": "model", "parts": [m.content]})
+                contents.append(
+                    types.Content(role="model", parts=[types.Part.from_text(text=m.content)])
+                )
 
-        # Remove the last user message from history (it becomes the send message)
-        if history and history[-1]["role"] == "user":
-            history = history[:-1]
+        if not contents:
+            contents.append(
+                types.Content(role="user", parts=[types.Part.from_text(text="こんにちは")])
+            )
 
-        def _sync_stream():
-            chat = gemini_model.start_chat(history=history)
-            return chat.send_message(last_user_content or "こんにちは", stream=True)
+        config = types.GenerateContentConfig(
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+            system_instruction="\n\n".join(system_parts) or None,
+        )
 
-        # Run blocking SDK call in a thread pool
-        response = await asyncio.to_thread(_sync_stream)
+        async def _run() -> AsyncGenerator[str, None]:
+            stream = await client.aio.models.generate_content_stream(
+                model=model,
+                contents=contents,
+                config=config,
+            )
+            async for chunk in stream:
+                if chunk.text:
+                    yield _data({"content": chunk.text})
 
-        # Iterate chunks synchronously via to_thread for each chunk
-        for chunk in response:
-            if chunk.text:
-                yield _data({"content": chunk.text})
+        # Retry up to 3 times on 429 (quota exceeded) with backoff.
+        last_exc: Exception | None = None
+        for attempt, delay in enumerate([0.0] + _RETRY_DELAYS):
+            if delay:
+                await asyncio.sleep(delay)
+            try:
+                async for sse in _run():
+                    yield sse
+                yield "data: [DONE]\n\n"
+                return
+            except Exception as exc:
+                last_exc = exc
+                exc_str = str(exc).lower()
+                if "429" in exc_str or "quota" in exc_str or "resource_exhausted" in exc_str:
+                    if attempt < len(_RETRY_DELAYS):
+                        continue  # retry with backoff
+                break  # non-429 error or retries exhausted
 
-        yield "data: [DONE]\n\n"
+        yield _err(str(last_exc))
 
     except Exception as exc:  # noqa: BLE001
         yield _err(str(exc))

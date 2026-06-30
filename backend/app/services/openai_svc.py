@@ -31,15 +31,14 @@ async def stream_openai(
             "temperature": temperature,
             "stream":      True,
         }
-        # max_tokens param varies by model family
         if not model.startswith("o1"):
             params["max_tokens"] = max_tokens
 
-        async with client.chat.completions.stream(**params) as stream:  # type: ignore[arg-type]
-            async for chunk in stream:
-                delta = chunk.choices[0].delta.content if chunk.choices else None
-                if delta:
-                    yield _data({"content": delta})
+        stream = await client.chat.completions.create(**params)
+        async for chunk in stream:
+            delta = chunk.choices[0].delta.content if chunk.choices else None
+            if delta:
+                yield _data({"content": delta})
 
         yield "data: [DONE]\n\n"
 

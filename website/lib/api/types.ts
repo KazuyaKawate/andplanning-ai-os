@@ -12,7 +12,11 @@
 import type {
   DashboardMetrics, WorkflowRun, FactoryRuntime, ActivityItem, MemoryEntry,
   Workflow, FactoryOutput, FactoryKnowledge, FactorySettings,
-  WorkflowInputField, OsSettings, ModelOption,
+  WorkflowInputField, OsSettings, ModelOption, ChatSession, ChatMessage,
+  VirtualAgent, VirtualAgentDetail, AgentCreateRequest, AgentUpdateRequest, AgentTestResult,
+  DevFileNode, DevPatch, DevHistoryEntry,
+  DebugStatus, DebugLogEntry, DebugSession,
+  AgentTask, TeamSession, AgentMessage, TeamStatus,
 } from '@/types'
 
 /* ======================================================================
@@ -124,4 +128,42 @@ export interface OsApiAdapter {
   getSettings(): Promise<ApiResult<GetSettingsResponse>>
   patchSettings(req: PatchSettingsRequest): Promise<ApiResult<PatchSettingsResponse>>
   getModels(): Promise<ApiResult<GetModelsResponse>>
+
+  /* Chat Sessions */
+  getChatSessions(params?: { limit?: number }): Promise<ApiResult<ChatSession[]>>
+  createChatSession(req: { factoryId?: string; title?: string }): Promise<ApiResult<ChatSession>>
+  getChatMessages(sessionId: string): Promise<ApiResult<ChatMessage[]>>
+  deleteChatSession(sessionId: string): Promise<ApiResult<void>>
+
+  /* Virtual Agents */
+  getAgents(): Promise<ApiResult<VirtualAgent[]>>
+  getAgent(agentId: string): Promise<ApiResult<VirtualAgentDetail>>
+  createAgent(req: AgentCreateRequest): Promise<ApiResult<VirtualAgentDetail>>
+  patchAgent(agentId: string, req: AgentUpdateRequest): Promise<ApiResult<VirtualAgentDetail>>
+  deleteAgent(agentId: string): Promise<ApiResult<{ ok: boolean }>>
+  enableAgent(agentId: string): Promise<ApiResult<VirtualAgentDetail>>
+  disableAgent(agentId: string): Promise<ApiResult<VirtualAgentDetail>>
+  testAgent(agentId: string, input: string): Promise<ApiResult<AgentTestResult>>
+
+  /* Virtual Claude Dev */
+  getDevFiles(): Promise<ApiResult<DevFileNode[]>>
+  devInspect(path: string): Promise<ApiResult<{ path: string; content: string; size: number; lines: number }>>
+  getDevPatches(status?: string): Promise<ApiResult<DevPatch[]>>
+  applyPatch(patchId: string): Promise<ApiResult<{ ok: boolean; message: string; patchId: string }>>
+  rejectPatch(patchId: string): Promise<ApiResult<{ ok: boolean; message: string; patchId: string }>>
+  getDevHistory(limit?: number): Promise<ApiResult<DevHistoryEntry[]>>
+
+  /* Auto Debugger */
+  getDebugStatus(): Promise<ApiResult<DebugStatus>>
+  getDebugLogs(limit?: number): Promise<ApiResult<DebugLogEntry[]>>
+  getDebugHistory(limit?: number): Promise<ApiResult<DebugSession[]>>
+
+  /* Virtual Claude Team */
+  getTeamStatus(): Promise<ApiResult<TeamStatus>>
+  getTeamTasks(params?: { status?: string; agentId?: string; sessionId?: string; limit?: number }): Promise<ApiResult<AgentTask[]>>
+  createTeamTask(req: { title: string; description?: string; agentId?: string; sessionId?: string; filePath?: string; priority?: number }): Promise<ApiResult<AgentTask>>
+  updateTeamTask(taskId: string, req: { status?: string; priority?: number; output?: string }): Promise<ApiResult<AgentTask>>
+  getTeamMessages(params?: { sessionId?: string; limit?: number }): Promise<ApiResult<AgentMessage[]>>
+  getTeamSessions(limit?: number): Promise<ApiResult<TeamSession[]>>
+  getTeamSession(sessionId: string): Promise<ApiResult<{ session: TeamSession; tasks: AgentTask[]; messages: AgentMessage[] }>>
 }

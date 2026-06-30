@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { api } from '@/lib/api/runtime'
-import type { OsSettings, ModelOption } from '@/types'
+import type { OsSettings, ModelOption, VirtualAgent } from '@/types'
 
 /* ======================================================================
    Toggle
@@ -158,10 +158,12 @@ const PROVIDER_INFO = {
 export default function SettingsPage() {
   const [settings,  setSettings]  = useState<OsSettings | null>(null)
   const [models,    setModels]    = useState<ModelOption[]>([])
+  const [agents,    setAgents]    = useState<VirtualAgent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isSaving,  setIsSaving]  = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [agentToggling, setAgentToggling] = useState<string | null>(null)
 
   // Initial load via api runtime
   useEffect(() => {
@@ -170,10 +172,12 @@ export default function SettingsPage() {
       void Promise.all([
         api.getSettings(),
         api.getModels(),
-      ]).then(([settingsRes, modelsRes]) => {
+        api.getAgents(),
+      ]).then(([settingsRes, modelsRes, agentsRes]) => {
         if (settingsRes.ok) setSettings(settingsRes.data)
         else                setLoadError(settingsRes.error)
         if (modelsRes.ok)   setModels(modelsRes.data)
+        if (agentsRes.ok)   setAgents(agentsRes.data)
         setIsLoading(false)
       }).catch(e => {
         setLoadError(e instanceof Error ? e.message : String(e))
@@ -201,6 +205,15 @@ export default function SettingsPage() {
   function updateApiKey(provider: keyof OsSettings['apiKeys'], value: string) {
     setSettings(prev => prev ? { ...prev, apiKeys: { ...prev.apiKeys, [provider]: value } } : prev)
     setSaveState('idle')
+  }
+
+  async function toggleAgent(agent: VirtualAgent) {
+    setAgentToggling(agent.id)
+    const res = await api.patchAgent(agent.id, { isEnabled: !agent.isEnabled })
+    if (res.ok) {
+      setAgents(prev => prev.map(a => a.id === agent.id ? res.data : a))
+    }
+    setAgentToggling(null)
   }
 
   async function handleSaveAll() {
@@ -255,6 +268,46 @@ export default function SettingsPage() {
           保存に失敗しました。再度お試しください。
         </div>
       )}
+
+      {/* Claude Mode */}
+      <SettingsSection title="Claude Mode">
+        <SettingsRow
+          label="Claude 動作モード"
+          sub="Anthropic APIキー未設定時は Virtual Claude が代替"
+        >
+          <div className="flex gap-1.5">
+            {(['auto', 'real', 'virtual'] as const).map(mode => {
+              const labels = { auto: 'Auto', real: 'Real Claude', virtual: 'Virtual Claude' }
+              const current = settings.claudeMode ?? 'auto'
+              return (
+                <button
+                  key={mode}
+                  onClick={() => update('claudeMode', mode)}
+                  className={[
+                    'text-xs font-mono px-3 py-1.5 rounded-lg border transition-colors',
+                    current === mode
+                      ? mode === 'real'
+                        ? 'bg-purple-600/20 text-purple-300 border-purple-500/30'
+                        : mode === 'virtual'
+                          ? 'bg-amber-600/20 text-amber-300 border-amber-500/30'
+                          : 'bg-brand-blue/20 text-brand-blue-bright border-brand-blue/30'
+                      : 'bg-white/[0.03] text-slate-500 border-white/[0.06] hover:text-slate-300',
+                  ].join(' ')}
+                >
+                  {labels[mode]}
+                </button>
+              )
+            })}
+          </div>
+        </SettingsRow>
+        <div className="px-5 py-3">
+          <p className="text-[11px] text-slate-600 leading-relaxed">
+            <span className="text-brand-cyan/70 font-mono">Auto</span> — Anthropic キーがあれば本物のClaudeを使用、なければ仮想Claudeで代替。
+            <span className="text-purple-400/70 font-mono ml-2">Real</span> — 常に本物のClaudeを使用（キー必須）。
+            <span className="text-amber-400/70 font-mono ml-2">Virtual</span> — 常に仮想Claudeを使用（OpenAI/Geminiで代替）。
+          </p>
+        </div>
+      </SettingsSection>
 
       {/* API Keys */}
       <SettingsSection title="API Keys">
@@ -370,6 +423,66 @@ export default function SettingsPage() {
           </div>
         </SettingsRow>
       </SettingsSection>
+
+      {/* Virtual Agents */}
+      {agents.length > 0 && (
+        <SettingsSection title="Virtual Agents">
+          <div className="px-5 py-4 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-[10px] text-slate-600 uppercase tracking-widest">
+                  <th className="text-left pb-2 font-medium">Agent</th>
+                  <th className="text-left pb-2 font-medium">Role</th>
+                  <th className="text-left pb-2 font-medium">Provider</th>
+                  <th className="text-left pb-2 font-medium hidden sm:table-cell">Category</th>
+                  <th className="text-left pb-2 font-medium hidden md:table-cell">Prio</th>
+                  <th className="text-right pb-2 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {agents.map(agent => (
+                  <tr key={agent.id} className="text-slate-400">
+                    <td className="py-2">
+                      <span className="mr-1.5">{agent.icon}</span>
+                      <span className="font-semibold text-slate-300">{agent.nameJa}</span>
+                      <span className="ml-2 text-slate-600 font-mono text-[10px]">{agent.id}</span>
+                    </td>
+                    <td className="py-2">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/[0.05] text-slate-500">
+                        {agent.role}
+                      </span>
+                    </td>
+                    <td className="py-2 font-mono text-slate-500">{agent.preferredProvider}</td>
+                    <td className="py-2 font-mono text-slate-600 text-[10px] hidden sm:table-cell">{agent.category ?? '—'}</td>
+                    <td className="py-2 font-mono text-slate-600 text-[10px] hidden md:table-cell">{agent.priority}</td>
+                    <td className="py-2 text-right">
+                      <button
+                        disabled={agentToggling === agent.id}
+                        onClick={() => void toggleAgent(agent)}
+                        className={[
+                          'relative inline-flex h-4 w-8 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50',
+                          agent.isEnabled ? 'bg-brand-cyan' : 'bg-white/[0.10]',
+                        ].join(' ')}
+                      >
+                        <span
+                          style={{ transform: `translateX(${agent.isEnabled ? 16 : 0}px)` }}
+                          className="inline-block h-3 w-3 rounded-full bg-white shadow transition-transform duration-200"
+                        />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-5 pb-4">
+            <p className="text-[11px] text-slate-600">
+              🟣 <span className="text-purple-400/70">virtual-claude</span> はAnthropicキー未設定時に自動的に他のプロバイダーで代替されます。
+              ルーター・プランナー等は <code className="font-mono">/api/agents/route</code> で自動選択されます。
+            </p>
+          </div>
+        </SettingsSection>
+      )}
 
       {/* Available Models table */}
       <SettingsSection title="Available Models">

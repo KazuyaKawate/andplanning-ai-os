@@ -1,0 +1,172 @@
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/ai-os-diagram.webp received null
+⨯ The requested resource isn't a valid image for /images/creator-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/writing-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/video-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/research-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/marketing-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/fortune-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/roadmap-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-symbol.webp received null
+⨯ The requested resource isn't a valid image for /images/ai-os-diagram.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/ai-os-diagram.webp received null
+⨯ The requested resource isn't a valid image for /images/creator-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/writing-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/video-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/research-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/marketing-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/fortune-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/roadmap-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/ai-os-diagram.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-symbol.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-symbol.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⚠ Blocked cross-origin request to Next.js dev resource /_next/webpack-hmr from "192.168.0.11".
+Cross-origin access to Next.js dev resources is blocked by default for safety.
+
+To allow this host in development, add it to "allowedDevOrigins" in next.config.js and restart the dev server:
+
+// next.config.js
+module.exports = {
+  allowedDevOrigins: ['192.168.0.11'],
+}
+
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+[browser] Uncaught TypeError: Cannot read properties of undefined (reading 'name')
+    at reducer (hooks/useWorkflowEngine.ts:149:57)
+    at useWorkflowEngine (hooks/useWorkflowEngine.ts:223:39)
+    at WorkflowRunPage (app/os/workflows/[id]/page.tsx:335:71)
+  147 |         logs: [
+  148 |           mkLog('info', `▶ Workflow run started [${action.runId}]`),
+> 149 |           mkLog('info', `[1/${steps.length}] ${steps[0].name}`),
+      |                                                         ^
+  150 |         ],
+  151 |       }
+  152 |     }
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/ai-os-diagram.webp received null
+⨯ The requested resource isn't a valid image for /images/video-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/writing-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/creator-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/research-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/marketing-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/fortune-factory.webp received null
+⨯ The requested resource isn't a valid image for /images/roadmap-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-symbol.webp received null
+⨯ The requested resource isn't a valid image for /images/ai-os-diagram.webp received null
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ReferenceError: mockQueue is not defined
+    at DashboardPage (app\os\dashboard\page.tsx:312:71)
+  310 | ..."flex items-center justify-between mb-3">
+  311 | ...="text-xs font-semibold text-slate-400 uppercase tracking-widest">Queue</h3>
+> 312 | ...me="text-[10px] font-mono text-slate-600">{mockQueue.length} 件待機</span>
+      |                                               ^
+  313 | ...
+  314 | ..."space-y-2">
+  315 | ...p((q) => ( {
+  digest: '3693539077'
+}
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ReferenceError: DevIcon is not defined
+    at module evaluation (components\os\OsSidebar.tsx:15:56)
+  13 |   { href: '/os/agents',     label: 'Agents',     icon: AgentIcon      },
+  14 |   { href: '/os/memory',     label: 'Memory',     icon: MemoryIcon     },
+> 15 |   { href: '/os/dev',        label: 'Dev',        icon: DevIcon        },
+     |                                                        ^
+  16 |   { href: '/os/settings',   label: 'Settings',   icon: SettingsIcon   },
+  17 | ]
+  18 | {
+  digest: '3171692292'
+}
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload when ./components/os/OsSidebar.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ReferenceError: DebugIcon is not defined
+    at module evaluation (components\os\OsSidebar.tsx:16:56)
+  14 |   { href: '/os/memory',     label: 'Memory',     icon: MemoryIcon     },
+  15 |   { href: '/os/dev',        label: 'Dev',        icon: DevIcon        },
+> 16 |   { href: '/os/debug',      label: 'Debug',      icon: DebugIcon      },
+     |                                                        ^
+  17 |   { href: '/os/settings',   label: 'Settings',   icon: SettingsIcon   },
+  18 | ]
+  19 | {
+  digest: '838956706'
+}
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload when ./components/os/OsSidebar.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ReferenceError: WorkspaceIcon is not defined
+    at module evaluation (components\os\OsSidebar.tsx:17:56)
+  15 |   { href: '/os/dev',        label: 'Dev',        icon: DevIcon        },
+  16 |   { href: '/os/debug',      label: 'Debug',      icon: DebugIcon      },
+> 17 |   { href: '/os/workspace',  label: 'Workspace',  icon: WorkspaceIcon  },
+     |                                                        ^
+  18 |   { href: '/os/team',       label: 'Team',       icon: TeamIcon       },
+  19 |   { href: '/os/settings',   label: 'Settings',   icon: SettingsIcon   },
+  20 | ] {
+  digest: '452147862'
+}
+⚠ Fast Refresh had to perform a full reload when ./components/os/OsSidebar.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ ReferenceError: EvolutionIcon is not defined
+    at module evaluation (components\os\OsSidebar.tsx:20:59)
+  18 |   { href: '/os/team',         label: 'Team',        icon: TeamIcon         },
+  19 |   { href: '/os/collaborate',  label: 'Collaborate', icon: CollaborateIcon  },
+> 20 |   { href: '/os/evolution',    label: 'Evolution',   icon: EvolutionIcon    },
+     |                                                           ^
+  21 |   { href: '/os/settings',   label: 'Settings',   icon: SettingsIcon   },
+  22 | ]
+  23 | {
+  digest: '461599242'
+}
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload when ./components/os/OsSidebar.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-symbol.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/hero-visual.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+⨯ The requested resource isn't a valid image for /images/logo-symbol.webp received null
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+⨯ The requested resource isn't a valid image for /images/logo-horizontal.webp received null
+⨯ The requested resource isn't a valid image for /images/logo-symbol.webp received null
