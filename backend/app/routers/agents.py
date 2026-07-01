@@ -25,6 +25,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import get_current_user
 from app.database import get_db
 from app.models import ActivityItem, AgentExecution, AgentPromptHistory, MemoryEntry, OsSettingsRow, VirtualAgent
 from app.schemas import (
@@ -36,7 +37,7 @@ from app.services.agent_executor import (
     run_agent_sync, select_model_for_agent, stream_agent,
 )
 
-router = APIRouter(tags=["agents"])
+router = APIRouter(tags=["agents"], dependencies=[Depends(get_current_user)])
 
 _KEBAB_RE = re.compile(r'^[a-z0-9]+(?:-[a-z0-9]+)*$')
 

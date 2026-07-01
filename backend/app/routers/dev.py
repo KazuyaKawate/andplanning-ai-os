@@ -36,7 +36,7 @@ from app.services.ai_router import resolve_model, provider_for
 from app.services.retry import stream_with_fallback
 from app.services.knowledge_loader import build_agent_context
 
-router = APIRouter(tags=["dev"])
+router = APIRouter(tags=["dev"], dependencies=[Depends(get_current_user)])
 
 # ---------------------------------------------------------------------------
 # Project root & safety

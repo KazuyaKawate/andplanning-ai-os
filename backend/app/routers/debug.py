@@ -31,7 +31,7 @@ from app.auth import get_current_user
 from app.services.ai_router import resolve_model
 from app.services.retry import stream_with_fallback
 
-router = APIRouter(tags=["debug"])
+router = APIRouter(tags=["debug"], dependencies=[Depends(get_current_user)])
 
 # Project root — debug.py is 4 levels deep from project root
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
