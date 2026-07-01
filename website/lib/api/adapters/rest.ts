@@ -18,6 +18,7 @@
  *   NEXT_PUBLIC_API_ADAPTER    — set to "mock" to use mockAdapter during dev
  */
 
+import { getToken } from '@/lib/auth'
 import type { OsApiAdapter, ApiResult } from '../types'
 
 /* ======================================================================
@@ -42,8 +43,13 @@ async function request<T>(
       'Content-Type': 'application/json',
       Accept:         'application/json',
     }
+    const token = getToken()
     const apiKey = process.env.NEXT_PUBLIC_API_KEY
-    if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    } else if (apiKey) {
+      headers.Authorization = `Bearer ${apiKey}`
+    }
 
     const res = await fetch(`${BASE_URL}${path}`, {
       method,
