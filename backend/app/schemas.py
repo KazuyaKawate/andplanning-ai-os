@@ -789,6 +789,7 @@ class BusinessClientOut(BaseModel):
     email: str | None = None
     phone: str | None = None
     status: str
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 class BusinessClientUpdate(BaseModel):
@@ -823,6 +824,7 @@ class BusinessDealOut(BaseModel):
     amount: float | None = None
     expected_close_date: datetime | None = None
     memo: str | None = None
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 class BusinessTaskCreate(BaseModel):
@@ -838,6 +840,7 @@ class BusinessTaskUpdate(BaseModel):
     description: str | None = None
     status: str | None = None
     due_date: datetime | None = None
+    result_text: str | None = None
 
 
 class BusinessTaskOut(BusinessTaskCreate):

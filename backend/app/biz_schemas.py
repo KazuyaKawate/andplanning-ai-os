@@ -221,6 +221,7 @@ class BizPurchaseRequest(BaseModel):
     marketplace_item_id: str
     price_plan_id:       str
     payment_provider:    str = "mock"
+    affiliate_id:        str | None = None
 
 
 class BizPurchaseOut(BaseModel):
@@ -256,6 +257,7 @@ class BizSubscribeRequest(BaseModel):
     price_plan_id:       str
     marketplace_item_id: str | None = None
     payment_provider:    str = "mock"
+    affiliate_id:        str | None = None
 
 
 class BizSubscriptionOut(BaseModel):
@@ -440,3 +442,25 @@ class BizGraphOut(BaseModel):
     edges: list[BizGraphEdge]
     total_nodes: int
     total_edges: int
+
+
+# ---------------------------------------------------------------------------
+# Affiliate Engine (Phase 1)
+# ---------------------------------------------------------------------------
+
+class BizAffiliateStatsOut(BaseModel):
+    total_referrals:       int
+    total_revenue_jpy:     int
+    total_commission_jpy:  int
+    unpaid_commission_jpy: int
+    paid_commission_jpy:   int
+
+
+class BizAffiliateReferralOut(BaseModel):
+    id:                     str
+    buyer_id:               str
+    marketplace_item_id:    str
+    marketplace_item_title: str
+    amount_jpy:             int
+    commission_jpy:         int
+    created_at:             str

@@ -302,6 +302,41 @@ async def get_task(
     return task
 
 
+async def _get_business_task_or_404(db: AsyncSession, task_id: int) -> BusinessTask:
+    result = await db.execute(
+        select(BusinessTask).where(BusinessTask.id == task_id)
+    )
+    task = result.scalar_one_or_none()
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+
+def _normalize_task_status(status: str) -> str:
+    return "in_progress" if status == "in progress" else status
+
+
+@router.patch("/tasks/{task_id}", response_model=BusinessTaskOut)
+async def update_task(
+    task_id: int,
+    data: BusinessTaskUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    task = await _get_business_task_or_404(db, task_id)
+
+    update_data = data.model_dump(exclude_unset=True)
+    if "status" in update_data and update_data["status"] is not None:
+        update_data["status"] = _normalize_task_status(update_data["status"])
+
+    for key, value in update_data.items():
+        setattr(task, key, value)
+
+    await db.commit()
+    await db.refresh(task)
+
+    return task
+
+
 @router.patch("/tasks/{task_id}/status", response_model=BusinessTaskOut)
 async def update_task_status(
     task_id: int,
@@ -309,18 +344,10 @@ async def update_task_status(
     result_text: str = None,
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(BusinessTask).where(BusinessTask.id == task_id)
-    )
-    task = result.scalar_one_or_none()
-
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
+    task = await _get_business_task_or_404(db, task_id)
 
     if status is not None:
-        if status == "in progress":
-            status = "in_progress"
-        task.status = status
+        task.status = _normalize_task_status(status)
 
     if result_text is not None:
         task.result_text = result_text

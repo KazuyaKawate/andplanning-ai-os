@@ -333,7 +333,7 @@ export const restAdapter: OsApiAdapter = {
     request('POST', '/api/business/tasks', req),
 
   updateTask: (taskId, req) =>
-    request('PATCH', `/api/business/tasks/${taskId}/status${qs(req)}`),
+    request('PATCH', `/api/business/tasks/${taskId}`, req),
 
   deleteTask: (taskId) =>
     request('DELETE', `/api/business/tasks/${taskId}`),
@@ -343,4 +343,11 @@ export const restAdapter: OsApiAdapter = {
 
   cancelBusinessTask: (taskId) =>
     request('POST', `/api/business-tasks/${taskId}/cancel`),
+
+  /* Admin Waitlist (Phase 5) */
+  getAdminUsers: () =>
+    request('GET', '/api/auth/admin/users'),
+
+  toggleUserActive: (userId) =>
+    request('POST', `/api/auth/admin/users/${userId}/toggle-active`),
 }

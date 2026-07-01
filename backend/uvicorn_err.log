@@ -1,6 +1,0 @@
-INFO:     Started server process [13036]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <Connection(Thread-11, started daemon 5388)>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
-<frozen abc>:123: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <Connection(Thread-11, started daemon 5388)>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.

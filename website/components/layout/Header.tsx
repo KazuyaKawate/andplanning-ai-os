@@ -59,12 +59,18 @@ export default function Header() {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-2">
             <Link
-              href="#contact"
-              className="inline-flex items-center justify-center text-sm font-medium px-5 py-2.5 rounded-lg bg-brand-blue hover:bg-brand-blue-bright text-white transition-colors"
+              href="/login"
+              className="inline-flex items-center justify-center text-sm font-medium px-4 py-2.5 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
             >
-              お問い合わせ
+              ログイン
+            </Link>
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center text-sm font-medium px-4 py-2.5 rounded-lg bg-brand-cyan hover:bg-brand-cyan-bright text-slate-900 font-bold transition-colors shadow-sm"
+            >
+              ベータ登録
             </Link>
           </div>
 
@@ -104,13 +110,22 @@ export default function Header() {
                   {item.label}
                 </Link>
               ))}
-              <Link
-                href="#contact"
-                className="inline-flex items-center justify-center text-sm font-medium px-5 py-2.5 rounded-lg bg-brand-blue text-white mt-2"
-                onClick={closeMobileMenu}
-              >
-                お問い合わせ
-              </Link>
+              <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-slate-100">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center text-sm font-medium px-5 py-2.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50"
+                  onClick={closeMobileMenu}
+                >
+                  ログイン
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center text-sm font-medium px-5 py-2.5 rounded-lg bg-brand-cyan hover:bg-brand-cyan-bright text-slate-900 font-bold"
+                  onClick={closeMobileMenu}
+                >
+                  ベータ登録
+                </Link>
+              </div>
             </nav>
           </motion.div>
         )}

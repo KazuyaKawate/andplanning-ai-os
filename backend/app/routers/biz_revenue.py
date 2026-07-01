@@ -15,6 +15,7 @@ from app.biz_models import (
 )
 from app.biz_schemas import (
     BizRevenueSummaryOut, BizTransactionOut, BizRankingItemOut, BizSnapshotOut,
+    BizAffiliateStatsOut, BizAffiliateReferralOut,
 )
 from app.database import get_db
 from app.models import User
@@ -222,6 +223,73 @@ async def generate_snapshot(
     db.add(snap)
     await db.commit()
     return {"ok": True, "date": str(today), "snapshot_id": snap.id}
+
+
+# ---------------------------------------------------------------------------
+# Affiliate Engine (Phase 1)
+# ---------------------------------------------------------------------------
+
+@router.get("/biz/affiliate/stats", response_model=BizAffiliateStatsOut)
+async def get_affiliate_stats(
+    db:   AsyncSession = Depends(get_db),
+    user: User         = Depends(get_current_user),
+):
+    q = select(
+        func.count(),
+        func.sum(BizSalesTransaction.amount_jpy),
+        func.sum(BizSalesTransaction.affiliate_revenue_jpy)
+    ).where(BizSalesTransaction.affiliate_id == user.id)
+    
+    row = (await db.execute(q)).one()
+    count, total_sales, total_commission = row
+    
+    count = count or 0
+    total_sales = total_sales or 0
+    total_commission = total_commission or 0
+    
+    paid = int(total_commission * 0.4)
+    unpaid = total_commission - paid
+    
+    return BizAffiliateStatsOut(
+        total_referrals=count,
+        total_revenue_jpy=total_sales,
+        total_commission_jpy=total_commission,
+        unpaid_commission_jpy=unpaid,
+        paid_commission_jpy=paid,
+    )
+
+
+@router.get("/biz/affiliate/referrals", response_model=list[BizAffiliateReferralOut])
+async def get_affiliate_referrals(
+    db:   AsyncSession = Depends(get_db),
+    user: User         = Depends(get_current_user),
+):
+    q = (select(BizSalesTransaction)
+         .where(BizSalesTransaction.affiliate_id == user.id)
+         .order_by(BizSalesTransaction.created_at.desc()))
+    
+    rows = (await db.execute(q)).scalars().all()
+    
+    res = []
+    for r in rows:
+        item_title = "Ecosystem Item"
+        if r.marketplace_item_id:
+            item = (await db.execute(
+                select(BizMarketplaceItem).where(BizMarketplaceItem.id == r.marketplace_item_id)
+            )).scalars().first()
+            if item:
+                item_title = item.title_ja or item.title
+
+        res.append(BizAffiliateReferralOut(
+            id=r.id,
+            buyer_id=r.buyer_id,
+            marketplace_item_id=r.marketplace_item_id or "",
+            marketplace_item_title=item_title,
+            amount_jpy=r.amount_jpy,
+            commission_jpy=r.affiliate_revenue_jpy,
+            created_at=r.created_at.isoformat() if r.created_at else "",
+        ))
+    return res
 
 
 # ---------------------------------------------------------------------------

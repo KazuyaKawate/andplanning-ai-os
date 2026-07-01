@@ -18,6 +18,7 @@ import type {
   DebugStatus, DebugLogEntry, DebugSession,
   AgentTask, TeamSession, AgentMessage, TeamStatus,
   BusinessClient, BusinessClientCreate, BusinessDeal, BusinessDealCreate, BusinessTask, BusinessTaskCreate,
+  AdminUser,
 } from '@/types'
 
 /* ======================================================================
@@ -181,9 +182,13 @@ export interface OsApiAdapter {
 
   getTasks(params?: { deal_id?: number; status?: string }): Promise<ApiResult<BusinessTask[]>>
   createTask(req: BusinessTaskCreate): Promise<ApiResult<BusinessTask>>
-  updateTask(taskId: number, req: Partial<BusinessTaskCreate> & { status?: string }): Promise<ApiResult<BusinessTask>>
+  updateTask(taskId: number, req: { status?: string; result_text?: string }): Promise<ApiResult<BusinessTask>>
   deleteTask(taskId: number): Promise<ApiResult<{ ok: boolean }>>
 
   startBusinessWorkflow(req: { deal_id: number; workflow_type?: string }): Promise<ApiResult<{ status: string; deal_id: number; created_tasks: BusinessTask[] }>>
   cancelBusinessTask(taskId: number): Promise<ApiResult<BusinessTask>>
+
+  /* Admin Waitlist (Phase 5) */
+  getAdminUsers(): Promise<ApiResult<AdminUser[]>>
+  toggleUserActive(userId: string): Promise<ApiResult<AdminUser>>
 }

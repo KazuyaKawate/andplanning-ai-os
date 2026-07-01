@@ -819,6 +819,7 @@ export type ExecutorTaskCreateRequest = {
 
 export type BusinessClient = {
   id: number
+  uuid: string
   name: string
   company: string | null
   email: string | null
@@ -837,6 +838,7 @@ export type BusinessClientCreate = {
 
 export type BusinessDeal = {
   id: number
+  uuid: string
   client_id: number
   title: string
   status: 'lead' | 'proposal' | 'negotiation' | 'won' | 'lost'
@@ -861,6 +863,7 @@ export type BusinessTask = {
   title: string
   description: string | null
   status: 'todo' | 'in_progress' | 'failed' | 'done'
+  due_date: string | null
   result_text: string | null
   executed_at: string | null
   error_msg: string | null
@@ -874,3 +877,11 @@ export type BusinessTaskCreate = {
   status?: string
 }
 
+export type AdminUser = {
+  id: string
+  email: string
+  display_name: string
+  role: string
+  is_active: boolean
+  created_at: string
+}

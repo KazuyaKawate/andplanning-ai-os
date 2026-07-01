@@ -113,6 +113,7 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
         hashed_password = _pwd_ctx.hash(req.password),
         display_name    = req.display_name or req.email.split("@")[0],
         role            = "admin" if user_count == 0 else "user",
+        is_active       = True if user_count == 0 else False,
     )
     db.add(user)
     await db.commit()
@@ -147,3 +148,36 @@ async def me(user: User = Depends(get_current_user)):
 async def logout():
     # JWT is stateless — actual logout happens client-side by deleting the token
     return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# Admin Waitlist Management (Phase 5)
+# ---------------------------------------------------------------------------
+
+@router.get("/admin/users", response_model=list[UserOut])
+async def list_users_for_admin(
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Retrieve all users in the system (Admin only) for beta management."""
+    result = await db.execute(select(User).order_by(User.created_at.desc()))
+    users = result.scalars().all()
+    return [_user_out(u) for u in users]
+
+
+@router.post("/admin/users/{user_id}/toggle-active", response_model=UserOut)
+async def toggle_user_active(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Approve/toggle user activation status (Admin only)."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    user.is_active = not user.is_active
+    await db.commit()
+    await db.refresh(user)
+    return _user_out(user)

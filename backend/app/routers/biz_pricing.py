@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user, require_admin
-from app.biz_models import BizPricePlan, BizSubscription, BizUserPurchase
+from app.biz_models import BizPricePlan, BizSubscription, BizUserPurchase, BizMarketplaceItem, BizSalesTransaction
 from app.biz_schemas import (
     BizPricePlanCreate, BizPricePlanOut, BizPricePlanUpdate,
     BizSubscribeRequest, BizSubscriptionOut, BizAccessCheckOut,
@@ -117,6 +117,56 @@ async def purchase_item(
         purchased_at=datetime.now(timezone.utc),
     )
     db.add(row)
+    await db.flush()
+
+    if row.status == "completed":
+        item = None
+        if body.marketplace_item_id:
+            item = (await db.execute(
+                select(BizMarketplaceItem).where(BizMarketplaceItem.id == body.marketplace_item_id)
+            )).scalars().first()
+
+        seller_id = item.seller_id if item else "platform"
+        creator_pct = item.creator_revenue_pct if item else 70.0
+        affiliate_enabled = item.affiliate_enabled if item else False
+        affiliate_pct = item.affiliate_pct if item else 0.0
+
+        platform_fee_pct = 100.0 - creator_pct
+        platform_revenue = int(row.amount_jpy * (platform_fee_pct / 100.0))
+        seller_revenue = row.amount_jpy - platform_revenue
+
+        affiliate_id = None
+        affiliate_revenue = 0
+        if affiliate_enabled and body.affiliate_id:
+            affiliate_id = body.affiliate_id
+            affiliate_revenue = int(row.amount_jpy * (affiliate_pct / 100.0))
+            seller_revenue = max(0, seller_revenue - affiliate_revenue)
+
+        tx = BizSalesTransaction(
+            id=str(uuid.uuid4()),
+            buyer_id=user.id,
+            seller_id=seller_id,
+            marketplace_item_id=body.marketplace_item_id,
+            price_plan_id=plan.id,
+            purchase_id=row.id,
+            amount_jpy=row.amount_jpy,
+            amount_usd_cents=int(row.amount_jpy * 0.7),
+            currency=row.currency,
+            platform_fee_pct=platform_fee_pct,
+            seller_revenue_jpy=seller_revenue,
+            platform_revenue_jpy=platform_revenue,
+            affiliate_id=affiliate_id,
+            affiliate_revenue_jpy=affiliate_revenue,
+            transaction_type="sale",
+            payment_provider=body.payment_provider,
+            payment_ref=row.payment_ref,
+            created_at=datetime.now(timezone.utc),
+        )
+        db.add(tx)
+
+        if item:
+            item.total_sales = (item.total_sales or 0) + 1
+
     await db.commit()
     await db.refresh(row)
     return _purchase_out(row)
@@ -168,6 +218,56 @@ async def subscribe(
         created_at=datetime.now(timezone.utc),
     )
     db.add(row)
+    await db.flush()
+
+    if row.status == "active" and plan.price_jpy > 0:
+        item = None
+        if body.marketplace_item_id:
+            item = (await db.execute(
+                select(BizMarketplaceItem).where(BizMarketplaceItem.id == body.marketplace_item_id)
+            )).scalars().first()
+
+        seller_id = item.seller_id if item else "platform"
+        creator_pct = item.creator_revenue_pct if item else 70.0
+        affiliate_enabled = item.affiliate_enabled if item else False
+        affiliate_pct = item.affiliate_pct if item else 0.0
+
+        platform_fee_pct = 100.0 - creator_pct
+        platform_revenue = int(plan.price_jpy * (platform_fee_pct / 100.0))
+        seller_revenue = plan.price_jpy - platform_revenue
+
+        affiliate_id = None
+        affiliate_revenue = 0
+        if affiliate_enabled and body.affiliate_id:
+            affiliate_id = body.affiliate_id
+            affiliate_revenue = int(plan.price_jpy * (affiliate_pct / 100.0))
+            seller_revenue = max(0, seller_revenue - affiliate_revenue)
+
+        tx = BizSalesTransaction(
+            id=str(uuid.uuid4()),
+            buyer_id=user.id,
+            seller_id=seller_id,
+            marketplace_item_id=body.marketplace_item_id or "subscription",
+            price_plan_id=plan.id,
+            purchase_id=row.id,
+            amount_jpy=plan.price_jpy,
+            amount_usd_cents=int(plan.price_jpy * 0.7),
+            currency=plan.currency,
+            platform_fee_pct=platform_fee_pct,
+            seller_revenue_jpy=seller_revenue,
+            platform_revenue_jpy=platform_revenue,
+            affiliate_id=affiliate_id,
+            affiliate_revenue_jpy=affiliate_revenue,
+            transaction_type="sale",
+            payment_provider=body.payment_provider,
+            payment_ref=row.stripe_subscription_id,
+            created_at=datetime.now(timezone.utc),
+        )
+        db.add(tx)
+
+        if item:
+            item.total_sales = (item.total_sales or 0) + 1
+
     await db.commit()
     await db.refresh(row)
     return _sub_out(row)

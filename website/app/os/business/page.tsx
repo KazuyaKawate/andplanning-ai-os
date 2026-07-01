@@ -61,6 +61,11 @@ export default function BusinessPage() {
   const [clientForm, setClientForm] = useState({ name: '', company: '', email: '', phone: '', status: 'lead' })
   const [dealForm, setDealForm] = useState({ title: '', status: 'lead', amount: 0, memo: '' })
 
+  // Business Engine enhancements states
+  const [selectedWorkflowType, setSelectedWorkflowType] = useState<string>('standard_sales')
+  const [isEditingResult, setIsEditingResult] = useState(false)
+  const [editedResultText, setEditedResultText] = useState('')
+
   // --- Fetch Operations ---
   const fetchClients = async () => {
     setLoadingClients(true)
@@ -217,9 +222,83 @@ export default function BusinessPage() {
   // --- Workflows ---
   const handleStartWorkflow = async () => {
     if (!selectedDeal) return
-    const res = await api.startBusinessWorkflow({ deal_id: selectedDeal.id })
+    const res = await api.startBusinessWorkflow({
+      deal_id: selectedDeal.id,
+      workflow_type: selectedWorkflowType,
+    })
     if (res.ok) {
       fetchTasks(selectedDeal.id)
+    }
+  }
+
+  // Business Engine enhancements actions
+  const handleStartEditing = () => {
+    if (selectedTask) {
+      setEditedResultText(selectedTask.result_text ?? '')
+      setIsEditingResult(true)
+    }
+  }
+
+  const handleSaveEditedResult = async () => {
+    if (selectedTask) {
+      const res = await api.updateTask(selectedTask.id, { result_text: editedResultText })
+      if (res.ok) {
+        setSelectedTask(res.data)
+        setIsEditingResult(false)
+        if (selectedDeal) {
+          fetchTasks(selectedDeal.id)
+        }
+      }
+    }
+  }
+
+  const handleRegenerateAi = async (task: BusinessTask) => {
+    const res = await api.updateTask(task.id, { status: 'todo', result_text: '' })
+    if (res.ok) {
+      setSelectedTask(res.data)
+      handleRunAi(res.data)
+    }
+  }
+
+  const handleExportMarkdown = (task: BusinessTask) => {
+    if (!task.result_text) return
+    const blob = new Blob([task.result_text], { type: 'text/markdown;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `${task.title}_draft.md`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleExportPdf = (task: BusinessTask) => {
+    if (!task.result_text) return
+    const win = window.open('', '_blank')
+    if (win) {
+      win.document.write(`
+        <html>
+          <head>
+            <title>${task.title}</title>
+            <style>
+              body { font-family: sans-serif; padding: 40px; line-height: 1.6; color: #1e293b; background-color: #f8fafc; }
+              .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+              h1 { border-bottom: 2px solid #38bdf8; padding-bottom: 12px; font-size: 24px; color: #0f172a; margin-top: 0; }
+              .meta { font-size: 11px; color: #64748b; margin-bottom: 30px; font-family: monospace; }
+              pre { white-space: pre-wrap; font-size: 14px; color: #334155; font-family: inherit; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>${task.title} — AI成果物ドラフト</h1>
+              <div class="meta">作成日時: ${task.executed_at ? new Date(task.executed_at).toLocaleString() : new Date().toLocaleString()}</div>
+              <pre>${task.result_text}</pre>
+            </div>
+            <script>window.print(); window.close();</script>
+          </body>
+        </html>
+      `)
+      win.document.close()
     }
   }
 
@@ -494,12 +573,24 @@ export default function BusinessPage() {
                     <span className="text-xs font-bold text-white truncate max-w-xs">{selectedDeal.title}</span>
                   </div>
 
-                  <button
-                    onClick={handleStartWorkflow}
-                    className="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 transition-colors flex items-center gap-1"
-                  >
-                    🚀 セールスワークフロー始動
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={selectedWorkflowType}
+                      onChange={e => setSelectedWorkflowType(e.target.value)}
+                      className="bg-[#070E1A] border border-white/[0.08] text-slate-300 text-[11px] rounded-lg p-1.5 focus:outline-none focus:border-brand-cyan"
+                    >
+                      <option value="standard_sales">標準セールス</option>
+                      <option value="video_production">動画企画・制作</option>
+                      <option value="content_marketing">コンテンツマーケティング</option>
+                      <option value="business_automation">業務自動化コンサル</option>
+                    </select>
+                    <button
+                      onClick={handleStartWorkflow}
+                      className="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 transition-colors flex items-center gap-1"
+                    >
+                      🚀 ワークフロー起動
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-3">
@@ -672,9 +763,71 @@ export default function BusinessPage() {
                       作成: {selectedTask.executed_at ? new Date(selectedTask.executed_at).toLocaleString() : ''}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-300 leading-relaxed bg-[#050B14] p-3 rounded-lg whitespace-pre-wrap border border-white/[0.02]">
-                    {selectedTask.result_text}
-                  </div>
+
+                  {isEditingResult ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editedResultText}
+                        onChange={e => setEditedResultText(e.target.value)}
+                        className="w-full text-xs bg-[#050B14] p-3 rounded-lg border border-brand-cyan/20 focus:outline-none text-slate-100 h-64 resize-y leading-relaxed font-mono"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setIsEditingResult(false)}
+                          className="px-2.5 py-1 text-[10px] font-semibold rounded bg-white/[0.02] border border-white/[0.06] text-slate-400 hover:bg-white/[0.06]"
+                        >
+                          キャンセル
+                        </button>
+                        <button
+                          onClick={handleSaveEditedResult}
+                          className="px-2.5 py-1 text-[10px] font-bold rounded bg-brand-cyan text-slate-900 hover:bg-brand-cyan-bright"
+                        >
+                          保存する
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="text-xs text-slate-300 leading-relaxed bg-[#050B14] p-3 rounded-lg whitespace-pre-wrap border border-white/[0.02]">
+                        {selectedTask.result_text}
+                      </div>
+                      
+                      {/* Action Triggers */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.04] pt-2">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={handleStartEditing}
+                            className="px-2 py-1 text-[9px] font-bold rounded bg-white/[0.02] border border-white/[0.06] text-slate-300 hover:bg-white/[0.04] flex items-center gap-1"
+                          >
+                            ✎ 編集する
+                          </button>
+                          <button
+                            onClick={() => handleRegenerateAi(selectedTask)}
+                            className="px-2 py-1 text-[9px] font-bold rounded bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan hover:bg-brand-cyan/20 flex items-center gap-1"
+                          >
+                            ⟳ 再生成する
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleExportMarkdown(selectedTask)}
+                            className="px-2 py-1 text-[9px] font-bold rounded bg-slate-500/10 border border-slate-500/20 text-slate-400 hover:bg-slate-500/20 flex items-center gap-1"
+                            title="Markdownとしてエクスポート"
+                          >
+                            ↓ MD
+                          </button>
+                          <button
+                            onClick={() => handleExportPdf(selectedTask)}
+                            className="px-2 py-1 text-[9px] font-bold rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 flex items-center gap-1"
+                            title="PDFを生成・印刷"
+                          >
+                            ↓ PDF
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

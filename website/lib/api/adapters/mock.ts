@@ -262,4 +262,8 @@ export const mockAdapter: OsApiAdapter = {
 
   startBusinessWorkflow: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
   cancelBusinessTask: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+
+  /* Admin Waitlist (Phase 5) */
+  getAdminUsers: async () => ({ ok: true as const, data: [] }),
+  toggleUserActive: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
 }
