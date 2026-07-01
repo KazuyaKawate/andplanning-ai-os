@@ -842,6 +842,9 @@ class BusinessTaskUpdate(BaseModel):
 
 class BusinessTaskOut(BusinessTaskCreate):
     id: int
+    result_text: str | None = None
+    executed_at: datetime | None = None
+    error_msg: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)  

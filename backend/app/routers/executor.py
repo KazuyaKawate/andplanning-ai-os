@@ -24,12 +24,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user, require_admin
 from app.database import get_db
-from app.models import DevPatch, DevHistory, ExecutorTask, OsSettingsRow, User
+from app.models import DevPatch, DevHistory, ExecutorTask, OsSettingsRow, User, BusinessTask
 from app.schemas import (
     ExecutorTaskCreate, ExecutorTaskOut,
     ExecutorApplyRequest, ExecutorTestRequest,
     ExecutorPlanRequest, ExecutorPatchRequest,
     ChatMessage as CM,
+    BusinessTaskOut,
 )
 from app.services.ai_router import resolve_model
 from app.services.retry import stream_with_fallback
@@ -38,6 +39,11 @@ from app.services.executor_engine import (
     EXECUTOR_SYSTEM_PROMPT, PROTECTED_FILES,
     parse_patch, is_protected, resolve_safe, read_file_safe,
     run_file_tests, generate_report,
+)
+from app.services.business_executor import (
+    build_business_context,
+    format_business_prompt,
+    BUSINESS_EXECUTOR_SYSTEM_PROMPT,
 )
 
 router = APIRouter(tags=["executor"])
@@ -616,15 +622,13 @@ async def claim_next_task(
         "status": "claimed",
         "task": task,
     }
-from app.models import BusinessTask
-from app.database import get_db
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends, HTTPException
+
+
 @router.post("/business-tasks/run-next")
 async def run_next_business_task(
     db: AsyncSession = Depends(get_db),
 ):
+    """Finds the next 'todo' business task, runs it using real AI (non-streaming), and returns JSON."""
     result = await db.execute(
         select(BusinessTask)
         .where(BusinessTask.status == "todo")
@@ -640,23 +644,186 @@ async def run_next_business_task(
             "message": "No todo business task found",
         }
 
+    try:
+        ctx = await build_business_context(db, task.id)
+        deal = ctx["deal"]
+        client = ctx["client"]
+    except HTTPException as e:
+        task.status = "failed"
+        task.error_msg = e.detail
+        await db.commit()
+        await db.refresh(task)
+        return {
+            "status": "failed",
+            "task": task,
+            "error": e.detail,
+        }
+
     task.status = "in_progress"
     await db.commit()
     await db.refresh(task)
 
-    # 今はAI実行の代わりに仮の実行結果を返す
-    execution_result = {
-        "task_id": task.id,
-        "title": task.title,
-        "result": f"{task.title} の実行準備が完了しました",
-    }
+    cfg = await _get_cfg(db)
+    model = resolve_model("dev", None, cfg.default_model, None)
 
-    task.status = "done"
+    prompt = format_business_prompt(task, deal, client)
+    messages = [CM(role="user", content=prompt)]
+
+    full_text = ""
+    error_occurred = False
+    err_msg = ""
+
+    try:
+        model_used, gen = await stream_with_fallback(
+            messages, model, cfg, BUSINESS_EXECUTOR_SYSTEM_PROMPT
+        )
+        async for chunk in gen:
+            for part in chunk.split("\n\n"):
+                part = part.strip()
+                if part.startswith("data: "):
+                    raw = part[6:].strip()
+                    if raw != "[DONE]":
+                        try:
+                            parsed = json.loads(raw)
+                            if "content" in parsed:
+                                full_text += parsed["content"]
+                            elif "error" in parsed:
+                                error_occurred = True
+                                err_msg = parsed["error"]
+                        except Exception:
+                            pass
+    except Exception as e:
+        error_occurred = True
+        err_msg = str(e)
+
+    if error_occurred:
+        task.status = "failed"
+        task.error_msg = err_msg or "AI execution failed"
+    else:
+        task.status = "done"
+        task.result_text = full_text
+        task.executed_at = _now()
+        task.error_msg = None
+
     await db.commit()
     await db.refresh(task)
+
+    if error_occurred:
+        return {
+            "status": "failed",
+            "task": task,
+            "error": task.error_msg,
+        }
 
     return {
         "status": "executed",
         "task": task,
-        "execution_result": execution_result,
+        "execution_result": {
+            "task_id": task.id,
+            "title": task.title,
+            "result": f"{task.title} の実行が完了しました",
+            "output": full_text,
+        },
     }
+
+
+@router.post("/business-tasks/{task_id}/run")
+async def run_business_task(
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
+    """Run a specific business task with AI, streaming the response via SSE."""
+    ctx = await build_business_context(db, task_id)
+    task = ctx["task"]
+    deal = ctx["deal"]
+    client = ctx["client"]
+
+    if task.status not in ("todo", "in_progress", "failed", "done"):
+        raise HTTPException(400, f"Task status is '{task.status}', cannot run.")
+
+    task.status = "in_progress"
+    task.error_msg = None
+    await db.commit()
+
+    cfg = await _get_cfg(db)
+    model = resolve_model("dev", None, cfg.default_model, None)
+
+    prompt = format_business_prompt(task, deal, client)
+    messages = [CM(role="user", content=prompt)]
+
+    async def sse_generator():
+        full_text = ""
+        error_occurred = False
+        err_msg = ""
+        
+        try:
+            model_used, gen = await stream_with_fallback(
+                messages, model, cfg, BUSINESS_EXECUTOR_SYSTEM_PROMPT
+            )
+            async for chunk in gen:
+                yield chunk
+                for part in chunk.split("\n\n"):
+                    part = part.strip()
+                    if part.startswith("data: "):
+                        raw = part[6:].strip()
+                        if raw != "[DONE]":
+                            try:
+                                parsed = json.loads(raw)
+                                if "content" in parsed:
+                                    full_text += parsed["content"]
+                                elif "error" in parsed:
+                                    error_occurred = True
+                                    err_msg = parsed["error"]
+                            except Exception:
+                                pass
+        except Exception as e:
+            error_occurred = True
+            err_msg = str(e)
+            yield f"data: {json.dumps({'error': err_msg})}\n\n"
+            yield "data: [DONE]\n\n"
+
+        from app.database import AsyncSessionLocal
+        async with AsyncSessionLocal() as session:
+            task_res = await session.execute(select(BusinessTask).where(BusinessTask.id == task_id))
+            safe_task = task_res.scalar_one_or_none()
+            if safe_task:
+                if error_occurred:
+                    safe_task.status = "failed"
+                    safe_task.error_msg = err_msg or "AI execution failed"
+                else:
+                    safe_task.status = "done"
+                    safe_task.result_text = full_text
+                    safe_task.executed_at = _now()
+                    safe_task.error_msg = None
+                await session.commit()
+
+    return StreamingResponse(
+        sse_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@router.post("/business-tasks/{task_id}/cancel", response_model=BusinessTaskOut)
+async def cancel_business_task(
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
+    """Cancel a business task that is in progress, resetting it to todo."""
+    result = await db.execute(
+        select(BusinessTask).where(BusinessTask.id == task_id)
+    )
+    task = result.scalar_one_or_none()
+    if not task:
+        raise HTTPException(status_code=404, detail="BusinessTask not found")
+
+    if task.status != "in_progress":
+        raise HTTPException(400, f"Cannot cancel task in '{task.status}' status (must be 'in_progress').")
+
+    task.status = "todo"
+    task.error_msg = "Cancelled by user"
+    await db.commit()
+    await db.refresh(task)
+    return task

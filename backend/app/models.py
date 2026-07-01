@@ -676,4 +676,7 @@ class BusinessTask(Base):
     description = Column(Text, nullable=True)
     status = Column(String, default="todo")
     due_date = Column(DateTime(timezone=True), nullable=True)
+    result_text = Column(Text, nullable=True)
+    executed_at = Column(DateTime(timezone=True), nullable=True)
+    error_msg = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_now)

@@ -14,6 +14,9 @@ logger = logging.getLogger("aios.migrations")
 _ALTER_COLUMNS = [
     # Business Engine Phase 1 — org_id on existing users table
     "ALTER TABLE users ADD COLUMN org_id TEXT",
+    "ALTER TABLE business_tasks ADD COLUMN result_text TEXT",
+    "ALTER TABLE business_tasks ADD COLUMN executed_at DATETIME",
+    "ALTER TABLE business_tasks ADD COLUMN error_msg TEXT",
 ]
 
 
