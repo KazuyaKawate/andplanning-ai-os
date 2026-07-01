@@ -24,6 +24,7 @@ const navItems = [
 ]
 
 const bizItems = [
+  { href: '/os/business',         label: 'Business OS', icon: BusinessIcon     },
   { href: '/os/orgs',             label: 'Orgs',        icon: OrgsIcon        },
   { href: '/os/marketplace',      label: 'Marketplace', icon: MarketplaceIcon },
   { href: '/os/assets',           label: 'Assets',      icon: AssetsIcon      },
@@ -269,6 +270,16 @@ function GraphIcon({ active }: { active?: boolean }) {
       <circle cx="3"  cy="15" r="1.5" />
       <circle cx="17" cy="15" r="1.5" />
       <path d="M8.5 9L4.3 6.8M11.5 9L15.7 6.8M8.5 11L4.3 14M11.5 11L15.7 14" />
+    </svg>
+  )
+}
+
+function BusinessIcon({ active }: { active?: boolean }) {
+  const c = active ? '#22D3EE' : '#475569'
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5" stroke={c} strokeWidth="1.5">
+      <rect x="2" y="3" width="16" height="14" rx="2" />
+      <path d="M6 7h8M6 11h5M6 15h8" strokeLinecap="round" />
     </svg>
   )
 }

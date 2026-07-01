@@ -812,3 +812,65 @@ export type ExecutorTaskCreateRequest = {
   provider?:    ExecutorProvider
   model?:       string
 }
+
+/* ======================================================
+   Business Engine — Phase 4
+   ====================================================== */
+
+export type BusinessClient = {
+  id: number
+  name: string
+  company: string | null
+  email: string | null
+  phone: string | null
+  status: 'active' | 'inactive' | 'lead'
+  created_at: string
+}
+
+export type BusinessClientCreate = {
+  name: string
+  company?: string
+  email?: string
+  phone?: string
+  status?: string
+}
+
+export type BusinessDeal = {
+  id: number
+  client_id: number
+  title: string
+  status: 'lead' | 'proposal' | 'negotiation' | 'won' | 'lost'
+  amount: number | null
+  expected_close_date: string | null
+  memo: string | null
+  created_at: string
+}
+
+export type BusinessDealCreate = {
+  client_id: number
+  title: string
+  status?: string
+  amount?: number
+  expected_close_date?: string
+  memo?: string
+}
+
+export type BusinessTask = {
+  id: number
+  deal_id: number
+  title: string
+  description: string | null
+  status: 'todo' | 'in_progress' | 'failed' | 'done'
+  result_text: string | null
+  executed_at: string | null
+  error_msg: string | null
+  created_at: string
+}
+
+export type BusinessTaskCreate = {
+  deal_id: number
+  title: string
+  description?: string
+  status?: string
+}
+

@@ -243,4 +243,23 @@ export const mockAdapter: OsApiAdapter = {
   getTeamMessages: async () => ({ ok: true as const, data: [] }),
   getTeamSessions: async () => ({ ok: true as const, data: [] }),
   getTeamSession: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+
+  /* ── Business Engine - Phase 4 ────────────────────────────────────── */
+  getClients: async () => ({ ok: true as const, data: [] }),
+  createClient: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+  updateClient: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+  deleteClient: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+
+  getDeals: async () => ({ ok: true as const, data: [] }),
+  createDeal: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+  updateDeal: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+  deleteDeal: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+
+  getTasks: async () => ({ ok: true as const, data: [] }),
+  createTask: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+  updateTask: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+  deleteTask: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+
+  startBusinessWorkflow: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
+  cancelBusinessTask: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
 }

@@ -293,4 +293,48 @@ export const restAdapter: OsApiAdapter = {
 
   getTeamSession: (sessionId) =>
     request('GET', `/api/team/sessions/${encodeURIComponent(sessionId)}`),
+
+  /* ── Business Engine - Phase 4 ───────────────────────────────────── */
+
+  getClients: () =>
+    request('GET', '/api/clients'),
+
+  createClient: (req) =>
+    request('POST', '/api/clients', req),
+
+  updateClient: (clientId, req) =>
+    request('PATCH', `/api/clients/${clientId}`, req),
+
+  deleteClient: (clientId) =>
+    request('DELETE', `/api/clients/${clientId}`),
+
+  getDeals: ({ client_id } = {}) =>
+    request('GET', `/api/deals${qs({ client_id })}`),
+
+  createDeal: (req) =>
+    request('POST', '/api/deals', req),
+
+  updateDeal: (dealId, req) =>
+    request('PATCH', `/api/deals/${dealId}`, req),
+
+  deleteDeal: (dealId) =>
+    request('DELETE', `/api/deals/${dealId}`),
+
+  getTasks: ({ deal_id, status } = {}) =>
+    request('GET', `/api/tasks${qs({ deal_id, status })}`),
+
+  createTask: (req) =>
+    request('POST', '/api/tasks', req),
+
+  updateTask: (taskId, req) =>
+    request('PATCH', `/api/tasks/${taskId}/status`, req),
+
+  deleteTask: (taskId) =>
+    request('DELETE', `/api/tasks/${taskId}`),
+
+  startBusinessWorkflow: (req) =>
+    request('POST', '/api/workflows/start', req),
+
+  cancelBusinessTask: (taskId) =>
+    request('POST', `/api/business-tasks/${taskId}/cancel`),
 }

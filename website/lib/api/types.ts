@@ -17,6 +17,7 @@ import type {
   DevFileNode, DevPatch, DevHistoryEntry,
   DebugStatus, DebugLogEntry, DebugSession,
   AgentTask, TeamSession, AgentMessage, TeamStatus,
+  BusinessClient, BusinessClientCreate, BusinessDeal, BusinessDealCreate, BusinessTask, BusinessTaskCreate,
 } from '@/types'
 
 /* ======================================================================
@@ -166,4 +167,23 @@ export interface OsApiAdapter {
   getTeamMessages(params?: { sessionId?: string; limit?: number }): Promise<ApiResult<AgentMessage[]>>
   getTeamSessions(limit?: number): Promise<ApiResult<TeamSession[]>>
   getTeamSession(sessionId: string): Promise<ApiResult<{ session: TeamSession; tasks: AgentTask[]; messages: AgentMessage[] }>>
+
+  /* Business Engine - Phase 4 */
+  getClients(): Promise<ApiResult<BusinessClient[]>>
+  createClient(req: BusinessClientCreate): Promise<ApiResult<BusinessClient>>
+  updateClient(clientId: number, req: Partial<BusinessClientCreate>): Promise<ApiResult<BusinessClient>>
+  deleteClient(clientId: number): Promise<ApiResult<{ ok: boolean }>>
+
+  getDeals(params?: { client_id?: number }): Promise<ApiResult<BusinessDeal[]>>
+  createDeal(req: BusinessDealCreate): Promise<ApiResult<BusinessDeal>>
+  updateDeal(dealId: number, req: Partial<BusinessDealCreate>): Promise<ApiResult<BusinessDeal>>
+  deleteDeal(dealId: number): Promise<ApiResult<{ ok: boolean }>>
+
+  getTasks(params?: { deal_id?: number; status?: string }): Promise<ApiResult<BusinessTask[]>>
+  createTask(req: BusinessTaskCreate): Promise<ApiResult<BusinessTask>>
+  updateTask(taskId: number, req: Partial<BusinessTaskCreate> & { status?: string }): Promise<ApiResult<BusinessTask>>
+  deleteTask(taskId: number): Promise<ApiResult<{ ok: boolean }>>
+
+  startBusinessWorkflow(req: { deal_id: number; workflow_type?: string }): Promise<ApiResult<{ status: string; deal_id: number; created_tasks: BusinessTask[] }>>
+  cancelBusinessTask(taskId: number): Promise<ApiResult<BusinessTask>>
 }
