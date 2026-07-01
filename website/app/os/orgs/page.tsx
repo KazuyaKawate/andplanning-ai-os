@@ -5,6 +5,7 @@ import { authHeaders } from '@/lib/auth'
 import type { Organization, OrgMember, OrgInvite } from '@/types'
 
 const BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000').replace(/\/$/, '')
+type OrgRole = 'developer' | 'admin' | 'viewer'
 
 /* ─── helpers ──────────────────────────────────────────────────────────── */
 
@@ -19,6 +20,10 @@ async function apiFetch<T>(path: string, opts?: RequestInit): Promise<T> {
   }
   if (res.status === 204) return undefined as T
   return res.json()
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }
 
 /* ─── Sub-components ────────────────────────────────────────────────────── */
@@ -78,7 +83,7 @@ function OrgDetail({
   const [members, setMembers]     = useState<OrgMember[]>([])
   const [invites, setInvites]     = useState<OrgInvite[]>([])
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole]   = useState<'developer' | 'admin' | 'viewer'>('developer')
+  const [inviteRole, setInviteRole]   = useState<OrgRole>('developer')
   const [tab, setTab]             = useState<'members' | 'invites'>('members')
   const [loading, setLoading]     = useState(false)
   const [msg, setMsg]             = useState('')
@@ -100,8 +105,8 @@ function OrgDetail({
       setInvites(p => [inv, ...p])
       setInviteEmail('')
       setMsg('招待を送信しました')
-    } catch (e: any) {
-      setMsg(`エラー: ${e.message}`)
+    } catch (e: unknown) {
+      setMsg(`エラー: ${errorMessage(e)}`)
     } finally {
       setLoading(false)
     }
@@ -208,7 +213,7 @@ function OrgDetail({
               />
               <select
                 value={inviteRole}
-                onChange={e => setInviteRole(e.target.value as any)}
+                onChange={e => setInviteRole(e.target.value as OrgRole)}
                 className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none"
               >
                 <option value="developer">developer</option>
@@ -278,8 +283,8 @@ function CreateOrgModal({
         body: JSON.stringify({ name: name.trim(), description: desc.trim() }),
       })
       onCreate(org)
-    } catch (e: any) {
-      setErr(e.message)
+    } catch (e: unknown) {
+      setErr(errorMessage(e))
     } finally {
       setLoading(false)
     }
@@ -342,8 +347,8 @@ export default function OrgsPage() {
     try {
       const data = await apiFetch<Organization[]>('/orgs/me')
       setOrgs(data)
-    } catch (e: any) {
-      setErr(e.message)
+    } catch (e: unknown) {
+      setErr(errorMessage(e))
     } finally {
       setLoading(false)
     }
