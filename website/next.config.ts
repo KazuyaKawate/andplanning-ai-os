@@ -2,7 +2,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   compress: true,
-  output: process.env.DOCKER_BUILD === '1' ? 'standalone' : undefined,
+  output: 'standalone', // Standalone is best for VPS/Rental Servers with Node
 
   images: {
     formats: ['image/avif', 'image/webp'],
