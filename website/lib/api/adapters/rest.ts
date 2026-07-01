@@ -303,43 +303,43 @@ export const restAdapter: OsApiAdapter = {
   /* ── Business Engine - Phase 4 ───────────────────────────────────── */
 
   getClients: () =>
-    request('GET', '/api/clients'),
+    request('GET', '/api/business/clients'),
 
   createClient: (req) =>
-    request('POST', '/api/clients', req),
+    request('POST', '/api/business/clients', req),
 
   updateClient: (clientId, req) =>
-    request('PATCH', `/api/clients/${clientId}`, req),
+    request('PATCH', `/api/business/clients/${clientId}`, req),
 
   deleteClient: (clientId) =>
-    request('DELETE', `/api/clients/${clientId}`),
+    request('DELETE', `/api/business/clients/${clientId}`),
 
   getDeals: ({ client_id } = {}) =>
-    request('GET', `/api/deals${qs({ client_id })}`),
+    request('GET', `/api/business/deals${qs({ client_id })}`),
 
   createDeal: (req) =>
-    request('POST', '/api/deals', req),
+    request('POST', '/api/business/deals', req),
 
   updateDeal: (dealId, req) =>
-    request('PATCH', `/api/deals/${dealId}`, req),
+    request('PATCH', `/api/business/deals/${dealId}`, req),
 
   deleteDeal: (dealId) =>
-    request('DELETE', `/api/deals/${dealId}`),
+    request('DELETE', `/api/business/deals/${dealId}`),
 
   getTasks: ({ deal_id, status } = {}) =>
-    request('GET', `/api/tasks${qs({ deal_id, status })}`),
+    request('GET', `/api/business/tasks${qs({ deal_id, status })}`),
 
   createTask: (req) =>
-    request('POST', '/api/tasks', req),
+    request('POST', '/api/business/tasks', req),
 
   updateTask: (taskId, req) =>
-    request('PATCH', `/api/tasks/${taskId}/status`, req),
+    request('PATCH', `/api/business/tasks/${taskId}/status${qs(req)}`),
 
   deleteTask: (taskId) =>
-    request('DELETE', `/api/tasks/${taskId}`),
+    request('DELETE', `/api/business/tasks/${taskId}`),
 
   startBusinessWorkflow: (req) =>
-    request('POST', '/api/workflows/start', req),
+    request('POST', '/api/business/workflows/start', req),
 
   cancelBusinessTask: (taskId) =>
     request('POST', `/api/business-tasks/${taskId}/cancel`),

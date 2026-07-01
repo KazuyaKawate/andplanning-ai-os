@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.auth import get_current_user
 from app.database import get_db
 from app.models import (
     BusinessClient,
@@ -21,7 +22,11 @@ from app.schemas import (
     BusinessWorkflowRequest,
 )
 
-router = APIRouter(prefix="/business", tags=["Business Engine"])
+router = APIRouter(
+    prefix="/business",
+    tags=["Business Engine"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("/health")
@@ -129,9 +134,13 @@ async def create_deal(
 
 @router.get("/deals", response_model=list[BusinessDealOut])
 async def list_deals(
+    client_id: int | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(BusinessDeal))
+    query = select(BusinessDeal)
+    if client_id is not None:
+        query = query.where(BusinessDeal.client_id == client_id)
+    result = await db.execute(query)
     return result.scalars().all()
 
 
@@ -214,9 +223,16 @@ async def create_task(
 
 @router.get("/tasks", response_model=list[BusinessTaskOut])
 async def list_tasks(
+    deal_id: int | None = None,
+    status: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(BusinessTask))
+    query = select(BusinessTask)
+    if deal_id is not None:
+        query = query.where(BusinessTask.deal_id == deal_id)
+    if status is not None:
+        query = query.where(BusinessTask.status == status)
+    result = await db.execute(query)
     return result.scalars().all()
 
 
@@ -289,7 +305,8 @@ async def get_task(
 @router.patch("/tasks/{task_id}/status", response_model=BusinessTaskOut)
 async def update_task_status(
     task_id: int,
-    status: str,
+    status: str = None,
+    result_text: str = None,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -300,11 +317,13 @@ async def update_task_status(
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    # status表記を統一
-    if status == "in progress":
-        status = "in_progress"
+    if status is not None:
+        if status == "in progress":
+            status = "in_progress"
+        task.status = status
 
-    task.status = status
+    if result_text is not None:
+        task.result_text = result_text
 
     await db.commit()
     await db.refresh(task)
@@ -339,6 +358,30 @@ async def delete_task(
 # Workflows
 # -------------------------
 
+BUSINESS_TEMPLATES = {
+    "standard_sales": [
+        {"title": "初回ヒアリング", "description": "クライアントの課題、予算、希望納期などを面談にてヒアリングし、メモに記録します。"},
+        {"title": "AI提案書の作成", "description": "ヒアリング内容に基づき、クライアントが抱える課題を解決するためのAI導入提案メールまたは提案書のドラフトを作成します。"},
+        {"title": "お見積・条件整理", "description": "案件金額やスコープに応じた詳細なお見積書および契約条件のドラフトを整理します。"},
+        {"title": "次回フォロー連絡", "description": "提案書送付後、検討状況のフォローアップ、面談日程の調整メールを送付します。"},
+    ],
+    "video_production": [
+        {"title": "動画構成・企画案の作成", "description": "案件要件に沿った動画のプロット、ターゲット層、メインメッセージの企画案を作成します。"},
+        {"title": "AI台本・ナレーション作成", "description": "企画案に基づき、AIナレーションおよび秒数ごとのカット割りを想定した台本（スクリプト）を作成します。"},
+        {"title": "撮影・編集用ガイド作成", "description": "撮影および動画編集用の詳細な演出指示、BGM選定ガイドをまとめます。"},
+    ],
+    "content_marketing": [
+        {"title": "キーワード・競合分析", "description": "ターゲットキーワード、競合サイトのSEO記事分析、流入想定キーワードを抽出します。"},
+        {"title": "AIブログ記事作成", "description": "抽出したキーワードをもとに、見出し構成、本文、メタディスクリプション、SNS告知文を含んだブログ記事のドラフトを作成します。"},
+        {"title": "配信スケジュール調整", "description": "記事の公開予定日、メルマガ配信、各SNSでの告知スケジュールをリストアップします。"},
+    ],
+    "business_automation": [
+        {"title": "業務プロセス可視化", "description": "自動化対象の既存の業務フロー（ステップ、ツール、入出力データ）をリストアップします。"},
+        {"title": "AI自動化設計案の策定", "description": "どの部分にAIOSや自動化スクリプト、RPAを適用するかを定義した設計書ドラフトを作成します。"},
+        {"title": "テストシナリオの作成", "description": "自動化適用後の正常動作、例外処理を検証するためのテスト用テストケースを作成します。"},
+    ]
+}
+
 @router.post("/workflows/start")
 async def start_business_workflow(
     data: BusinessWorkflowRequest,
@@ -364,21 +407,16 @@ async def start_business_workflow(
             "existing_tasks": existing_tasks,
         }
 
-    templates = [
-        "初回ヒアリング",
-        "必要資料の確認",
-        "提案内容の作成",
-        "見積・条件整理",
-        "次回連絡",
-    ]
+    workflow_type = data.workflow_type if data.workflow_type in BUSINESS_TEMPLATES else "standard_sales"
+    templates = BUSINESS_TEMPLATES[workflow_type]
 
     created_tasks = []
 
-    for title in templates:
+    for item in templates:
         task = BusinessTask(
             deal_id=deal.id,
-            title=title,
-            description=f"{deal.title} の自動生成タスク",
+            title=item["title"],
+            description=item["description"],
             status="todo",
         )
         db.add(task)

@@ -600,6 +600,7 @@ async def cancel_task(
 @router.post("/tasks/claim-next")
 async def claim_next_task(
     db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     result = await db.execute(
         select(BusinessTask)
@@ -627,6 +628,7 @@ async def claim_next_task(
 @router.post("/business-tasks/run-next")
 async def run_next_business_task(
     db: AsyncSession = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     """Finds the next 'todo' business task, runs it using real AI (non-streaming), and returns JSON."""
     result = await db.execute(
