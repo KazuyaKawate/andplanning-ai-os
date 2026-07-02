@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     # CORS — comma-separated list of allowed origins
     allowed_origins: str = "http://localhost:3000,http://localhost:3001"
 
+    # Security
+    jwt_secret_key: str = "change-me-in-production-please-use-long-random-string"
+
     # Default AI provider API keys (overridden per-request by stored settings)
     openai_api_key: str = ""
     anthropic_api_key: str = ""

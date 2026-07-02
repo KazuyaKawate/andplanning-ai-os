@@ -32,7 +32,7 @@ from app.models import User
 # Config
 # ---------------------------------------------------------------------------
 
-_SECRET = os.getenv("JWT_SECRET_KEY", "change-me-in-production-please-use-long-random-string")
+_SECRET = settings.jwt_secret_key
 _ALGO   = "HS256"
 _EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
