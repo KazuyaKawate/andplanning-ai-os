@@ -304,7 +304,7 @@ function GraphView({ graph, selected, onSelect, onAutoGen }: {
 
 /* ─── Relation List ──────────────────────────────────────────────────────── */
 
-function RelationList({ relations, onDelete, onAutoGen }: {
+function RelationList({ relations, onDelete, onAutoGen: _onAutoGen }: {
   relations: Relation[]
   onDelete: (id: string) => void
   onAutoGen: (type: string, id: string) => void

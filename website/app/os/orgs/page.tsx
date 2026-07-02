@@ -74,7 +74,7 @@ function OrgCard({
 /* ─── Org Detail Panel ───────────────────────────────────────────────────── */
 
 function OrgDetail({
-  org, onBack, onRefresh,
+  org, onBack, onRefresh: _onRefresh,
 }: {
   org: Organization
   onBack: () => void

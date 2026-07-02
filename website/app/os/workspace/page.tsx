@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
 import { formatRelativeTime } from '@/lib/utils'
 import type { DevFileNode, DevPatch, DevHistoryEntry, AgentTask } from '@/types'
 
@@ -64,7 +63,7 @@ const AGENT_ICONS: Record<string, string> = {
   'virtual-claude-dev': '🛠️', 'auto-debugger': '🐛',
 }
 
-function TaskRow({ task, onStatusChange }: { task: AgentTask; onStatusChange?: (id: string, status: string) => void }) {
+function TaskRow({ task }: { task: AgentTask }) {
   const clr = STATUS_COLORS[task.status] ?? 'bg-slate-500/20 text-slate-500'
   const icon = AGENT_ICONS[task.agentId ?? ''] ?? '🤖'
   return (

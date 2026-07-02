@@ -316,8 +316,6 @@ export default function OsSidebar() {
       {/* Nav */}
       <nav className="flex-1 py-4 space-y-0.5 px-2 overflow-y-auto" aria-label="OS navigation">
         {navItems.map((nav) => {
-          const active = pathname.startsWith(nav.href) && nav.href !== '/os/knowledge'
-            || pathname === nav.href
           const isKnowledge = nav.href === '/os/knowledge'
           const isActive = isKnowledge
             ? pathname === '/os/knowledge' || (pathname.startsWith('/os/knowledge') && !pathname.startsWith('/os/knowledge/graph'))

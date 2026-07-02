@@ -532,10 +532,10 @@ export default function CollaboratePage() {
     }
   }, [goal, context, running])
 
-  function handlePatchApply(id: string) {
+  function handlePatchApply(_id: string) {
     // Visual handled by PatchCard; no additional state change needed here
   }
-  function handlePatchReject(id: string) {
+  function handlePatchReject(_id: string) {
     // Visual handled by PatchCard
   }
 

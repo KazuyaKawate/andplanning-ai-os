@@ -238,7 +238,7 @@ export const mockAdapter: OsApiAdapter = {
     total_sessions: 0, total_tokens: 0, recent_activity: [],
   }}),
   getTeamTasks: async () => ({ ok: true as const, data: [] }),
-  createTeamTask: async (req) => ({ ok: false as const, error: 'mock: use REST adapter' }),
+  createTeamTask: async (_req) => ({ ok: false as const, error: 'mock: use REST adapter' }),
   updateTeamTask: async () => ({ ok: false as const, error: 'mock: use REST adapter' }),
   getTeamMessages: async () => ({ ok: true as const, data: [] }),
   getTeamSessions: async () => ({ ok: true as const, data: [] }),

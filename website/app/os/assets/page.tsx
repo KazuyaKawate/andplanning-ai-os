@@ -192,6 +192,7 @@ function AssetDetailPanel({ asset, onClose, onDelete }: {
           </div>
         </div>
         {asset.public_url && asset.asset_type === 'image' && (
+          /* eslint-disable-next-line @next/next/no-img-element */
           <img src={asset.public_url} alt={asset.name} className="w-full rounded-lg mb-4 max-h-48 object-contain bg-white/[0.03]" />
         )}
         <div className="grid grid-cols-2 gap-3 mb-4 text-xs">

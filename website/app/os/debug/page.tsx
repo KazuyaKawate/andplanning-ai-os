@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion } from 'motion/react'
 import { formatRelativeTime } from '@/lib/utils'
 import type { DebugStatus, DebugLogEntry, DebugSession, DevPatch } from '@/types'
 

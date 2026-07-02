@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getToken } from '@/lib/auth'
 import type { ExecutorTask, ExecutorProvider, DevPatch } from '@/types'
 

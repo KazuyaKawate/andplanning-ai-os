@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'motion/react'
 import { api } from '@/lib/api/runtime'
 import StatusBadge from '@/components/os/StatusBadge'
 import type { AdminUser } from '@/types'
