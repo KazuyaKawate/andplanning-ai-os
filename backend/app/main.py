@@ -126,40 +126,48 @@ async def log_requests(request: Request, call_next):
 # Routers
 # ---------------------------------------------------------------------------
 
+from app.auth import get_current_user
+from fastapi import Depends
+
 PREFIX = "/api"
 
+# Auth and Health are public
 app.include_router(auth_router.router,         prefix=PREFIX)
-app.include_router(notifications_router.router, prefix=PREFIX)
 app.include_router(health_router.router,        prefix=PREFIX)
-app.include_router(evolution_router.router,     prefix=PREFIX)
-app.include_router(knowledge_router.router,    prefix=PREFIX)
-app.include_router(chat.router,                prefix=PREFIX)
-app.include_router(dashboard.router,           prefix=PREFIX)
-app.include_router(factories.router,           prefix=PREFIX)
-app.include_router(workflows.router,           prefix=PREFIX)
-app.include_router(runs.router,                prefix=PREFIX)
-app.include_router(activity.router,            prefix=PREFIX)
-app.include_router(memory.router,              prefix=PREFIX)
-app.include_router(settings_router.router,     prefix=PREFIX)
-app.include_router(models_api.router,          prefix=PREFIX)
-app.include_router(chat_history.router,        prefix=PREFIX)
-app.include_router(agents.router,              prefix=PREFIX)
-app.include_router(dev.router,                 prefix=PREFIX)
-app.include_router(debug.router,               prefix=PREFIX)
-app.include_router(team.router,                prefix=PREFIX)
+
+# All other routers require authentication by default
+PROTECTED = [Depends(get_current_user)]
+
+app.include_router(notifications_router.router, prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(evolution_router.router,     prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(knowledge_router.router,    prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(chat.router,                prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(dashboard.router,           prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(factories.router,           prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(workflows.router,           prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(runs.router,                prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(activity.router,            prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(memory.router,              prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(settings_router.router,     prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(models_api.router,          prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(chat_history.router,        prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(agents.router,              prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(dev.router,                 prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(debug.router,               prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(team.router,                prefix=PREFIX, dependencies=PROTECTED)
 # Business Knowledge Base
-app.include_router(biz_licenses.router,        prefix=PREFIX)
-app.include_router(biz_marketplace.router,     prefix=PREFIX)
-app.include_router(biz_assets.router,          prefix=PREFIX)
-app.include_router(biz_library.router,         prefix=PREFIX)
-app.include_router(biz_pricing.router,         prefix=PREFIX)
-app.include_router(biz_revenue.router,         prefix=PREFIX)
-app.include_router(biz_knowledge.router,       prefix=PREFIX)
+app.include_router(biz_licenses.router,        prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(biz_marketplace.router,     prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(biz_assets.router,          prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(biz_library.router,         prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(biz_pricing.router,         prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(biz_revenue.router,         prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(biz_knowledge.router,       prefix=PREFIX, dependencies=PROTECTED)
 # Business Engine Phase 1
-app.include_router(orgs_router.router,         prefix=PREFIX)
-app.include_router(business_router.router, prefix=PREFIX)
+app.include_router(orgs_router.router,         prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(business_router.router, prefix=PREFIX, dependencies=PROTECTED)
 # AIOS Executor Phase 1
-app.include_router(executor_router.router,     prefix=PREFIX)
+app.include_router(executor_router.router,     prefix=PREFIX, dependencies=PROTECTED)
 
 
 # ---------------------------------------------------------------------------
