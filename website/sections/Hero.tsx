@@ -130,32 +130,31 @@ export default function Hero() {
               variants={textItem}
               className="mt-7 text-5xl sm:text-6xl lg:text-[4rem] xl:text-[4.5rem] font-bold font-heading tracking-tight text-slate-900 leading-[1.06]"
             >
-              Build Your{' '}
-              <GradientText>AI Factory.</GradientText>
+              AIが、あなたの
               <br />
-              Operate Your
+              仕事を<GradientText>24時間</GradientText>
               <br />
-              Future.
+              進める。
             </motion.h1>
 
             <motion.p
               variants={textItem}
               className="mt-6 text-lg sm:text-xl text-slate-500 max-w-xl leading-relaxed mx-auto lg:mx-0"
             >
-              AIが考え、AIが動き、AIが成果を積み重ねる。
+              Web制作、業務自動化、コンテンツ生成、収益化支援まで。
               <br className="hidden sm:block" />
-              And Planningは日本初のAI Operating Systemです。
+              AIOSは個人事業・副業・小規模ビジネスのためのAI業務OSです。
             </motion.p>
 
             <motion.div
               variants={textItem}
               className="mt-9 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
             >
-              <Button variant="primary" size="lg" href="#contact">
-                お問い合わせ
+              <Button variant="primary" size="lg" href="/signup">
+                無料β版をはじめる
               </Button>
-              <Button variant="secondary" size="lg" href="#ai-os">
-                詳しく見る →
+              <Button variant="secondary" size="lg" href="#contact">
+                AIOSに相談する
               </Button>
             </motion.div>
 
@@ -164,7 +163,11 @@ export default function Hero() {
               variants={textItem}
               className="mt-12 flex items-center justify-center lg:justify-start divide-x divide-slate-100"
             >
-              {stats.map((stat) => (
+              {[
+                { label: 'Operation',    num: 24, suffix: 'h',   display: '24h'  },
+                { label: 'AI Factories', num: 6,  suffix: '',    display: '6'    },
+                { label: 'AI Providers', num: 3,  suffix: ' AI', display: '3 AI' },
+              ].map((stat) => (
                 <div key={stat.label} className="text-center lg:text-left px-6 first:pl-0 last:pr-0">
                   <p className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 tabular-nums">
                     <AnimCounter to={stat.num} suffix={stat.suffix} />

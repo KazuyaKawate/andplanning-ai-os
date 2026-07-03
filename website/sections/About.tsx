@@ -52,14 +52,14 @@ export default function About() {
       >
         {/* Header */}
         <motion.div variants={item} className="text-center">
-          <Badge variant="default">About</Badge>
+          <Badge variant="default">AIOS Capabilities</Badge>
           <h2 className="mt-6 text-4xl lg:text-5xl font-bold font-heading text-slate-900 tracking-tight">
-            And Planningとは
+            AIOSでできること
           </h2>
           <p className="mt-5 text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            AIを道具ではなく、チームメンバーとして設計する。
+            AIOSは単なるチャットツールではありません。
             <br className="hidden sm:block" />
-            私たちはその思想を、プロダクトで証明します。
+            思考、実行、改善を繰り返す「自律型AIチーム」を構築します。
           </p>
         </motion.div>
 

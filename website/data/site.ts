@@ -1,10 +1,10 @@
 import type { NavItem, Factory, Phase, NewsItem, OsLayer, RoadmapItem, SocialLink, LegalLink } from '@/types'
 
 export const siteConfig = {
-  name: 'And Planning',
+  name: 'And Planning AIOS',
   tagline: 'Build Your AI Factory. Operate Your Future.',
-  taglineJa: 'AIが考え、AIが動き、AIが成果を積み重ねる。',
-  description: '日本初のAI Operating System。あなたのビジネスを自動化するAI Factory Platform。',
+  taglineJa: 'AIが、あなたの仕事を24時間進める。',
+  description: 'Web制作、業務自動化、コンテンツ生成、収益化支援まで。AIOSは個人事業・副業・小規模ビジネスのためのAI業務OSです。',
   email: 'hello@andplanning.ai',
   github: 'https://github.com/andplanning',
   url: 'https://andplanning.ai',
