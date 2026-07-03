@@ -17,3 +17,9 @@ passlib[bcrypt]
 bcrypt<5
 # Rate limiting
 slowapi
+# Testing
+pytest==8.3.3
+pytest-asyncio==0.24.0
+# Worker
+celery==5.4.0
+redis==5.2.0

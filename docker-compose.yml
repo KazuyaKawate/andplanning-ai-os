@@ -8,15 +8,38 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     volumes:
-      - ./backend/data:/app/data     # SQLite DB persistence
+      - ./backend/data:/app/data
+    environment:
+      - REDIS_URL=redis://redis:6379/0
     env_file:
       - ./backend/.env
+    depends_on:
+      - redis
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
+
+  # ── Celery Worker ──────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["celery", "-A", "app.worker.celery_app", "worker", "--loglevel=info", "-Q", "aios-tasks"]
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
 
   # ── Next.js Frontend ───────────────────────────────────────────────────────
   frontend:

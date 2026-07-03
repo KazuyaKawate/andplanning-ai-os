@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite+aiosqlite:///./data/aios.db"
 
+    # Redis / Celery
+    redis_url: str = "redis://localhost:6379/0"
+
     # CORS — comma-separated list of allowed origins
     allowed_origins: str = "http://localhost:3000,http://localhost:3001"
 
