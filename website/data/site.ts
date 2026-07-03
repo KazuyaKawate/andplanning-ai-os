@@ -236,6 +236,13 @@ export const socialLinks: SocialLink[] = [
 export const legalLinks: LegalLink[] = [
   { label: '利用規約',           href: '/terms'   },
   { label: 'プライバシーポリシー', href: '/privacy' },
+  { label: '特定商取引法表示',     href: '/legal'   },
+]
+
+export const supportLinks = [
+  { label: '料金プラン', href: '/pricing' },
+  { label: 'FAQ',       href: '/faq'     },
+  { label: 'お問い合わせ', href: '/contact' },
 ]
 
 export const newsItems: NewsItem[] = [

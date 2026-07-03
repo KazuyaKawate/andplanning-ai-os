@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { motion } from 'motion/react'
 import SmartImage from '@/components/ui/SmartImage'
 import GradientText from '@/components/ui/GradientText'
-import { navItems, siteConfig, socialLinks, legalLinks } from '@/data/site'
+import { navItems, siteConfig, socialLinks, legalLinks, supportLinks } from '@/data/site'
 import { logoImages } from '@/config/images'
 
 /* ========== Social icon SVGs ========== */
@@ -142,10 +142,26 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact + Legal */}
+          {/* Support */}
           <div>
             <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.2em] mb-5">
-              Contact
+              Support
+            </p>
+            <ul className="space-y-3 mb-8">
+              {supportLinks.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="text-sm text-slate-500 hover:text-white transition-colors duration-200"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.2em] mb-5">
+              Links
             </p>
             <ul className="space-y-3">
               <li>
