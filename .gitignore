@@ -29,3 +29,12 @@ backend/.venv/
 # Database
 data/*.db
 data/*.sqlite
+
+# Runtime / production artifacts
+logs/
+certbot/
+ssl/
+nginx/certs/
+*.bak
+*.bak.*
+*.log

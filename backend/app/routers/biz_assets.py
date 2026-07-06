@@ -35,6 +35,7 @@ async def list_public_assets(
     skip:       int          = Query(0, ge=0),
     limit:      int          = Query(20, ge=1, le=100),
     db:         AsyncSession = Depends(get_db),
+    user:       User         = Depends(get_current_user),
 ):
     q = select(BizAsset).where(BizAsset.is_public == True)
     if asset_type:
@@ -45,7 +46,11 @@ async def list_public_assets(
 
 
 @router.get("/biz/assets/{asset_id}", response_model=BizAssetOut)
-async def get_asset(asset_id: str, db: AsyncSession = Depends(get_db)):
+async def get_asset(
+    asset_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     row = await _get_or_404(db, asset_id)
     if not row.is_public:
         raise HTTPException(403, "Asset is private")

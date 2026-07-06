@@ -1,0 +1,73 @@
+{
+  "accounts": [
+    {
+      "platform": "GitHub",
+      "profileUrl": "https://github.com/andplanning",
+      "username": "andplanning",
+      "displayName": "And Planning",
+      "description": {
+        "ja": "AI Operating System (AIOS) の開発リポジトリです。",
+        "en": "Development repository for AI Operating System (AIOS)."
+      },
+      "website": "https://ap-aios.com",
+      "assets": {
+        "icon": "/logos/github-icon.png",
+        "banner": "/images/github-banner.png"
+      },
+      "capabilities": {
+        "apiEnabled": true,
+        "browserAutomationEnabled": false
+      },
+      "syncStatus": {
+        "lastSyncAt": "2026-07-03T00:00:00Z",
+        "status": "synced"
+      }
+    },
+    {
+      "platform": "X",
+      "profileUrl": "https://x.com/andplanning",
+      "username": "andplanning",
+      "displayName": "And Planning AIOS",
+      "description": {
+        "ja": "AIがあなたの仕事を24時間進める。AI業務OS「AIOS」公式アカウント。",
+        "en": "Official account of AIOS, the AI Operating System that works 24/7."
+      },
+      "website": "https://ap-aios.com",
+      "assets": {
+        "icon": "/logos/x-icon.png",
+        "banner": "/images/x-banner.png"
+      },
+      "capabilities": {
+        "apiEnabled": true,
+        "browserAutomationEnabled": true
+      },
+      "syncStatus": {
+        "lastSyncAt": "2026-07-03T01:00:00Z",
+        "status": "synced"
+      }
+    },
+    {
+      "platform": "note",
+      "profileUrl": "https://note.com/andplanning",
+      "username": "andplanning",
+      "displayName": "And Planning",
+      "description": {
+        "ja": "AIOSの活用事例や、AIとの共創の未来について発信しています。",
+        "en": "Sharing use cases of AIOS and the future of co-creation with AI."
+      },
+      "website": "https://ap-aios.com",
+      "assets": {
+        "icon": "/logos/note-icon.png",
+        "banner": "/images/note-banner.png"
+      },
+      "capabilities": {
+        "apiEnabled": false,
+        "browserAutomationEnabled": true
+      },
+      "syncStatus": {
+        "lastSyncAt": "2026-07-03T02:00:00Z",
+        "status": "pending"
+      }
+    }
+  ]
+}

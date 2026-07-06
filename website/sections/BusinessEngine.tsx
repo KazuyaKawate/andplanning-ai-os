@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'motion/react'
 import SectionWrapper from '@/components/ui/SectionWrapper'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'

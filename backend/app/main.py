@@ -29,6 +29,7 @@ from app.routers import chat, dashboard, factories, workflows, runs, activity, m
 from app.routers import settings as settings_router
 from app.routers import models_api
 from app.routers import chat_history
+from app.routers import business_dashboard
 from app.routers import agents
 from app.routers import dev
 from app.routers import debug
@@ -151,6 +152,7 @@ app.include_router(memory.router,              prefix=PREFIX, dependencies=PROTE
 app.include_router(settings_router.router,     prefix=PREFIX, dependencies=PROTECTED)
 app.include_router(models_api.router,          prefix=PREFIX, dependencies=PROTECTED)
 app.include_router(chat_history.router,        prefix=PREFIX, dependencies=PROTECTED)
+app.include_router(business_dashboard.router,   prefix=PREFIX, dependencies=PROTECTED)
 app.include_router(agents.router,              prefix=PREFIX, dependencies=PROTECTED)
 app.include_router(dev.router,                 prefix=PREFIX, dependencies=PROTECTED)
 app.include_router(debug.router,               prefix=PREFIX, dependencies=PROTECTED)

@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 
 from app.database import get_db
-from app.models import ChatSession, ChatMessageRow, OsSettingsRow, Factory
+from app.models import ChatSession, ChatMessageRow, OsSettingsRow, Factory, User
 from app.schemas import (
     ChatSessionCreate, ChatSessionOut, ChatMessageCreate, ChatMessageOut,
     ChatRequest,
@@ -28,6 +28,7 @@ from app.services.ai_router import (
     resolve_model, provider_for, calculate_cost_usd, FACTORY_DEFAULT_MODELS,
 )
 from app.services.retry import stream_with_fallback
+from app.auth import get_current_user
 
 router = APIRouter(tags=["chat-history"])
 
@@ -75,7 +76,11 @@ async def _get_settings(db: AsyncSession) -> OsSettingsRow:
 # ── Sessions ──────────────────────────────────────────────────────────────────
 
 @router.get("/chat-sessions", response_model=list[ChatSessionOut])
-async def list_sessions(limit: int = 20, db: AsyncSession = Depends(get_db)):
+async def list_sessions(
+    limit: int = 20,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     res = await db.execute(
         select(ChatSession).order_by(desc(ChatSession.updated_at)).limit(limit)
     )
@@ -90,7 +95,11 @@ async def list_sessions(limit: int = 20, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/chat-sessions", response_model=ChatSessionOut, status_code=201)
-async def create_session(req: ChatSessionCreate, db: AsyncSession = Depends(get_db)):
+async def create_session(
+    req: ChatSessionCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     cfg = await _get_settings(db)
     factory = None
     if req.factory_id:

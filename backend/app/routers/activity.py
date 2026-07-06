@@ -5,14 +5,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.database import get_db
-from app.models import ActivityItem
+from app.models import ActivityItem, User
 from app.schemas import ActivityItemOut
+from app.auth import require_admin
 
 router = APIRouter(tags=["activity"])
 
 
 @router.get("/activity", response_model=list[ActivityItemOut])
-async def get_activity(limit: int = 10, db: AsyncSession = Depends(get_db)):
+async def get_activity(
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin),
+):
     result = await db.execute(
         select(ActivityItem)
         .order_by(ActivityItem.timestamp.desc())

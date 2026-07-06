@@ -1,0 +1,24 @@
+{
+  "campaigns": [
+    {
+      "id": "camp-001",
+      "name": "AIOS β版 ローンチキャンペーン",
+      "targetAudience": "個人事業主, 副業クリエイター, 中小企業経営者",
+      "platforms": ["X", "note", "LinkedIn"],
+      "priority": "high",
+      "plan": [],
+      "kpi": {
+        "clicks": 0,
+        "impressions": 0,
+        "followerGrowth": 0,
+        "conversions": 0,
+        "roi": 0
+      },
+      "improvementHistory": [
+        "2026-07-03: キャンペーン初期設計完了"
+      ],
+      "createdAt": "2026-07-03T05:00:00Z",
+      "updatedAt": "2026-07-03T05:00:00Z"
+    }
+  ]
+}

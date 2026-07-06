@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import require_admin
+from app.auth import get_current_user, require_admin
 from app.biz_models import BizLicense
 from app.biz_schemas import BizLicenseCreate, BizLicenseOut
 from app.database import get_db
@@ -14,14 +14,21 @@ router = APIRouter(tags=["biz-licenses"])
 
 
 @router.get("/biz/licenses", response_model=list[BizLicenseOut])
-async def list_licenses(db: AsyncSession = Depends(get_db)):
+async def list_licenses(
+    db: AsyncSession = Depends(get_db),
+    user: object = Depends(get_current_user),
+):
     result = await db.execute(select(BizLicense).where(BizLicense.is_active == True))
     rows = result.scalars().all()
     return [_out(r) for r in rows]
 
 
 @router.get("/biz/licenses/{license_id}", response_model=BizLicenseOut)
-async def get_license(license_id: str, db: AsyncSession = Depends(get_db)):
+async def get_license(
+    license_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: object = Depends(get_current_user),
+):
     row = await _get_or_404(db, license_id)
     return _out(row)
 

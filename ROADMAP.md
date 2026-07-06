@@ -8,7 +8,7 @@
 ## 現在地
 
 ```
-Phase 1 ████████░░  80%  基盤構築
+Phase 1 █████████░  90%  基盤構築
 Phase 2 ██░░░░░░░░  20%  Factory MVP
 Phase 3 ░░░░░░░░░░   0%  商用化
 Phase 4 ░░░░░░░░░░   0%  スケール
@@ -29,10 +29,10 @@ Phase 4 ░░░░░░░░░░   0%  スケール
 - [x] Dashboard（Streamlit 稼働監視）
 - [x] Memory / Snapshot（状態永続化）
 - [x] Factory Registry（Factory管理基盤）
+- [x] Website MVP（公式ホームページ）
 
 ### 進行中
 - [ ] ドキュメント整備（本作業）
-- [ ] Website MVP（公式ホームページ）
 - [ ] Note Factory MVP（最初の実用Factory）
 
 ---

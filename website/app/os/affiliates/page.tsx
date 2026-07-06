@@ -10,6 +10,7 @@ type Resource = {
   affiliateUrl: string
   discountCode?: string
   accentColor: string
+  icon_type?: string
 }
 
 const RESOURCES: Resource[] = [

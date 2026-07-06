@@ -1,0 +1,12 @@
+{
+  "sources": [
+    { "id": "src-001", "name": "AIOS Pro Subscription", "category": "Subscription", "platform": "Web" },
+    { "id": "src-002", "name": "note Affiliate", "category": "Affiliate", "platform": "note" },
+    { "id": "src-003", "name": "X Ads Revenue", "category": "Ad", "platform": "X" }
+  ],
+  "entries": [
+    { "id": "rev-001", "sourceId": "src-001", "amount": 2980, "currency": "JPY", "date": "2026-07-01", "profitMargin": 0.8 },
+    { "id": "rev-002", "sourceId": "src-002", "amount": 1200, "currency": "JPY", "date": "2026-07-02", "profitMargin": 1.0 },
+    { "id": "rev-003", "sourceId": "src-001", "amount": 2980, "currency": "JPY", "date": "2026-07-03", "profitMargin": 0.8 }
+  ]
+}

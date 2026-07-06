@@ -247,6 +247,20 @@ export const supportLinks = [
 
 export const newsItems: NewsItem[] = [
   {
+    id: '5',
+    title: 'And Planning AI OS 開発ロードマップ更新 (2026 Q3 - 2027 Q2)',
+    date: '2026-07-02',
+    category: 'Update',
+    href: '/os/evolution',
+  },
+  {
+    id: '4',
+    title: 'Writing Factory / Note MVP が正式稼働を開始',
+    date: '2026-07-01',
+    category: 'Release',
+    href: '/os/factories/writing',
+  },
+  {
     id: '3',
     title: 'And Planning 公式サイト β 公開 — AI OS の全体像をWebで初公開',
     date: '2026-06-28',

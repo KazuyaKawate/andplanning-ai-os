@@ -26,6 +26,7 @@ async def list_relations(
     target_id:     str | None   = Query(None),
     relation_type: str | None   = Query(None),
     db:            AsyncSession = Depends(get_db),
+    user:          User         = Depends(get_current_user),
 ):
     repo = get_graph_repo(db)
     rows = await repo.get_relations(
@@ -87,6 +88,7 @@ async def get_graph(
     filter_type: str | None   = Query(None, description="entity type to center graph on"),
     filter_id:   str | None   = Query(None, description="entity ID to center graph on"),
     db:          AsyncSession = Depends(get_db),
+    user:        User         = Depends(get_current_user),
 ):
     repo  = get_graph_repo(db)
     graph = await repo.get_graph(filter_type=filter_type, filter_id=filter_id)

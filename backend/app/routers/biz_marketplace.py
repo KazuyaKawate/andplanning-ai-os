@@ -33,6 +33,7 @@ async def list_marketplace(
     limit:     int          = Query(20, ge=1, le=100),
     sort_by:   str          = Query("created_at"),
     db:        AsyncSession = Depends(get_db),
+    user:      User         = Depends(get_current_user),
 ):
     q = select(BizMarketplaceItem).where(BizMarketplaceItem.status == status)
     if item_type:
@@ -69,7 +70,10 @@ async def list_marketplace(
 
 
 @router.get("/biz/marketplace/featured", response_model=list[BizMarketplaceItemOut])
-async def featured_items(db: AsyncSession = Depends(get_db)):
+async def featured_items(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     q = (select(BizMarketplaceItem)
          .where(BizMarketplaceItem.status == "published")
          .order_by(BizMarketplaceItem.avg_rating.desc(), BizMarketplaceItem.total_sales.desc())
@@ -79,7 +83,10 @@ async def featured_items(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/biz/marketplace/categories")
-async def list_categories(db: AsyncSession = Depends(get_db)):
+async def list_categories(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     q = (select(BizMarketplaceItem.category)
          .where(BizMarketplaceItem.status == "published",
                 BizMarketplaceItem.category != "")
@@ -89,7 +96,11 @@ async def list_categories(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/biz/marketplace/{item_id}", response_model=BizMarketplaceItemOut)
-async def get_marketplace_item(item_id: str, db: AsyncSession = Depends(get_db)):
+async def get_marketplace_item(
+    item_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     row = await _get_or_404(db, item_id)
     return _out(row)
 
@@ -154,7 +165,11 @@ async def remove_marketplace_item(
 # ---------------------------------------------------------------------------
 
 @router.get("/biz/marketplace/{item_id}/price-plans")
-async def get_item_price_plans(item_id: str, db: AsyncSession = Depends(get_db)):
+async def get_item_price_plans(
+    item_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     await _get_or_404(db, item_id)
     q = select(BizItemPricePlan).where(BizItemPricePlan.item_id == item_id)
     rows = (await db.execute(q)).scalars().all()

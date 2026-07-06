@@ -1,0 +1,42 @@
+{
+  "snapshots": [
+    {
+      "timestamp": "2026-07-02T23:59:59Z",
+      "brandId": "AIOS",
+      "platform": "X",
+      "metrics": {
+        "pv": 0,
+        "impressions": 12500,
+        "reach": 8900,
+        "clicks": 450,
+        "ctr": 0.036,
+        "likes": 120,
+        "shares": 45,
+        "comments": 12,
+        "followers": 850,
+        "conversions": 15,
+        "revenue": 0,
+        "roi": 0
+      }
+    },
+    {
+      "timestamp": "2026-07-02T23:59:59Z",
+      "brandId": "AIOS",
+      "platform": "note",
+      "metrics": {
+        "pv": 850,
+        "impressions": 2100,
+        "reach": 1500,
+        "clicks": 180,
+        "ctr": 0.085,
+        "likes": 56,
+        "shares": 12,
+        "comments": 8,
+        "followers": 320,
+        "conversions": 5,
+        "revenue": 14900,
+        "roi": 2.5
+      }
+    }
+  ]
+}

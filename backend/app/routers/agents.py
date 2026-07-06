@@ -25,9 +25,9 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import get_current_user
+from app.auth import get_current_user, require_admin
 from app.database import get_db
-from app.models import ActivityItem, AgentExecution, AgentPromptHistory, MemoryEntry, OsSettingsRow, VirtualAgent
+from app.models import ActivityItem, AgentExecution, AgentPromptHistory, MemoryEntry, OsSettingsRow, VirtualAgent, User
 from app.schemas import (
     AgentRunRequest, AgentRunOut, AgentTestRequest, AgentTestResult,
     VirtualAgentCreate, VirtualAgentDetail, VirtualAgentOut, VirtualAgentUpdate,
@@ -213,7 +213,11 @@ async def get_agent(agent_id: str, db: AsyncSession = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.post("/agents", response_model=VirtualAgentDetail, status_code=201)
-async def create_agent(req: VirtualAgentCreate, db: AsyncSession = Depends(get_db)):
+async def create_agent(
+    req: VirtualAgentCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin),
+):
     # Validate ID format
     if not _KEBAB_RE.match(req.id):
         raise HTTPException(400, "Agent ID must be kebab-case (e.g. 'my-agent-01')")
@@ -264,7 +268,12 @@ async def create_agent(req: VirtualAgentCreate, db: AsyncSession = Depends(get_d
 # ---------------------------------------------------------------------------
 
 @router.patch("/agents/{agent_id}", response_model=VirtualAgentDetail)
-async def patch_agent(agent_id: str, req: VirtualAgentUpdate, db: AsyncSession = Depends(get_db)):
+async def patch_agent(
+    agent_id: str,
+    req: VirtualAgentUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin),
+):
     res = await db.execute(select(VirtualAgent).where(VirtualAgent.id == agent_id))
     agent = res.scalars().first()
     if not agent:
@@ -334,7 +343,11 @@ async def patch_agent(agent_id: str, req: VirtualAgentUpdate, db: AsyncSession =
 # ---------------------------------------------------------------------------
 
 @router.delete("/agents/{agent_id}")
-async def delete_agent(agent_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_agent(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin),
+):
     res = await db.execute(select(VirtualAgent).where(VirtualAgent.id == agent_id))
     agent = res.scalars().first()
     if not agent:
@@ -353,7 +366,11 @@ async def delete_agent(agent_id: str, db: AsyncSession = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.post("/agents/{agent_id}/enable", response_model=VirtualAgentDetail)
-async def enable_agent(agent_id: str, db: AsyncSession = Depends(get_db)):
+async def enable_agent(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin),
+):
     res = await db.execute(select(VirtualAgent).where(VirtualAgent.id == agent_id))
     agent = res.scalars().first()
     if not agent:
@@ -368,7 +385,11 @@ async def enable_agent(agent_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/agents/{agent_id}/disable", response_model=VirtualAgentDetail)
-async def disable_agent(agent_id: str, db: AsyncSession = Depends(get_db)):
+async def disable_agent(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_admin),
+):
     res = await db.execute(select(VirtualAgent).where(VirtualAgent.id == agent_id))
     agent = res.scalars().first()
     if not agent:

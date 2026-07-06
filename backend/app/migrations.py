@@ -86,13 +86,22 @@ _INDEXES = [
 async def run_migrations(engine: AsyncEngine) -> None:
     """Run column additions (idempotent) then index creations."""
     sa = __import__("sqlalchemy")
-    async with engine.begin() as conn:
-        # Column additions — SQLite errors on duplicate; silently ignore
-        for sql in _ALTER_COLUMNS:
+    # Using 'begin' creates a transaction. For Postgres, if one statement fails,
+    # the whole transaction is aborted. We need to handle this by running
+    # each potentially-failing statement in its own sub-transaction or block.
+    
+    for sql in _ALTER_COLUMNS:
+        async with engine.begin() as conn:
             try:
                 await conn.execute(sa.text(sql))
             except Exception:
-                pass  # column already exists
-        # Indexes — all use IF NOT EXISTS
-        for sql in _INDEXES:
-            await conn.execute(sa.text(sql))
+                pass  # column already exists or other error
+
+    for sql in _INDEXES:
+        async with engine.begin() as conn:
+            try:
+                await conn.execute(sa.text(sql))
+            except Exception:
+                # Some dialects might not support IF NOT EXISTS in specific contexts
+                # or have different error codes.
+                logger.warning(f"Failed to run migration index SQL: {sql}")

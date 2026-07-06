@@ -39,14 +39,6 @@ function AnimCounter({ to, suffix = '' }: { to: number; suffix?: string }) {
   return <span ref={ref}>0{suffix}</span>
 }
 
-/* ========== Stats ========== */
-
-const stats = [
-  { label: 'AI Factories',  num: 6,  suffix: '',   display: '6'     },
-  { label: 'Workflow',      num: 9,  suffix: 'step', display: '9step' },
-  { label: 'AI Providers',  num: 3,  suffix: ' AI', display: '3 AI'  },
-]
-
 /* ========== Component ========== */
 
 export default function Hero() {

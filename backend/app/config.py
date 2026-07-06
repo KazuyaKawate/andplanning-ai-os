@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     google_api_key: str = ""
 
+    # Business Engine
+    business_engine_prod: bool = False
+
     # Optional — Bearer token to protect this backend's own API
     api_secret_key: str = ""
 

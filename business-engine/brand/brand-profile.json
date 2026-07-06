@@ -1,0 +1,24 @@
+{
+  "name": "AIOS",
+  "fullName": "AI Operating System",
+  "organization": "And Planning",
+  "url": "https://ap-aios.com",
+  "description": {
+    "ja": "AIOSはAIによる業務自動化・コンテンツ制作・マーケティング・Web運営を統合したAI Operating Systemです。",
+    "en": "AIOS is an AI Operating System that automates business workflows, content production, marketing, and website management."
+  },
+  "logo": {
+    "horizontal": "/images/logo-horizontal.webp",
+    "symbol": "/images/logo-symbol.webp"
+  },
+  "sns": [
+    { "platform": "GitHub", "url": "https://github.com/andplanning", "active": true },
+    { "platform": "LinkedIn", "url": "#", "active": false },
+    { "platform": "X", "url": "https://x.com/andplanning", "active": true },
+    { "platform": "Threads", "url": "#", "active": false },
+    { "platform": "Facebook", "url": "#", "active": false },
+    { "platform": "Instagram", "url": "#", "active": false },
+    { "platform": "note", "url": "https://note.com/andplanning", "active": true },
+    { "platform": "YouTube", "url": "#", "active": false }
+  ]
+}

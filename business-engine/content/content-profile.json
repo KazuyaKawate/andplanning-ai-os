@@ -1,0 +1,22 @@
+{
+  "entries": [
+    {
+      "id": "post-001",
+      "title": "AIOS β版 公開のお知らせ",
+      "body": "And Planning AIOSの無料β版を公開しました。24時間稼働するAIチームをあなたのビジネスに導入しましょう。詳細は公式サイトをご覧ください。",
+      "summary": "AIOS無料β版公開のプレスリリース",
+      "hashtags": ["AIOS", "AI", "業務自動化"],
+      "media": [
+        { "type": "image", "url": "/images/hero-visual.webp", "alt": "AIOS Dashboard" }
+      ],
+      "category": "Announcements",
+      "targetPlatforms": ["X", "note", "LinkedIn"],
+      "optimizations": [],
+      "status": "draft",
+      "isAiGenerated": true,
+      "isHumanApproved": false,
+      "createdAt": "2026-07-03T05:00:00Z",
+      "updatedAt": "2026-07-03T05:00:00Z"
+    }
+  ]
+}

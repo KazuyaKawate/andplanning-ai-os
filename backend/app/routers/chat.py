@@ -15,13 +15,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.database import get_db
-from app.models import OsSettingsRow, Factory
+from app.models import OsSettingsRow, Factory, User
 from app.schemas import ChatRequest
 from app.services.ai_router import resolve_model, provider_for, FACTORY_DEFAULT_MODELS
 from app.services.openai_svc import stream_openai
 from app.services.anthropic_svc import stream_anthropic
 from app.services.gemini_svc import stream_gemini
 from app.services.retry import stream_with_fallback
+from app.auth import get_current_user
 
 router = APIRouter(tags=["chat"])
 
@@ -61,7 +62,11 @@ def _sse_headers() -> dict:
 # ---------------------------------------------------------------------------
 
 @router.post("/chat/openai")
-async def chat_openai(req: ChatRequest, db: AsyncSession = Depends(get_db)):
+async def chat_openai(
+    req: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     cfg     = await _get_settings(db)
     factory = await _get_factory(db, req.factory_id)
 
@@ -86,7 +91,11 @@ async def chat_openai(req: ChatRequest, db: AsyncSession = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.post("/chat/claude")
-async def chat_claude(req: ChatRequest, db: AsyncSession = Depends(get_db)):
+async def chat_claude(
+    req: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     cfg     = await _get_settings(db)
     factory = await _get_factory(db, req.factory_id)
 
@@ -115,7 +124,11 @@ async def chat_claude(req: ChatRequest, db: AsyncSession = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.post("/chat/gemini")
-async def chat_gemini(req: ChatRequest, db: AsyncSession = Depends(get_db)):
+async def chat_gemini(
+    req: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     cfg     = await _get_settings(db)
     factory = await _get_factory(db, req.factory_id)
 
@@ -139,7 +152,11 @@ async def chat_gemini(req: ChatRequest, db: AsyncSession = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.post("/chat")
-async def chat_auto(req: ChatRequest, db: AsyncSession = Depends(get_db)):
+async def chat_auto(
+    req: ChatRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     """Route to the appropriate provider automatically with fallback chain."""
     cfg     = await _get_settings(db)
     factory = await _get_factory(db, req.factory_id)
