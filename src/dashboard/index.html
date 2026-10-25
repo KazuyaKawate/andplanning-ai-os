@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja" data-theme="night">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI OS Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- 上の帯: 時計と今日の数字 -->
+      <header class="topbar">
+        <div class="brand">
+          <span class="live"><i></i>LIVE</span>
+          <div>
+            <h1 id="title"></h1>
+            <p id="tagline"></p>
+          </div>
+        </div>
+        <div class="clock">
+          <small>いまの時刻</small>
+          <strong id="clock">--:--:--</strong>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><small>終わった仕事</small><strong id="kpi-done">0</strong><em>件</em></div>
+          <div class="kpi"><small>いま働いているAI</small><strong id="kpi-working">0</strong><em>人</em></div>
+          <div class="kpi"><small>今日の投稿</small><strong id="kpi-posts">0</strong><em>本</em></div>
+          <div class="kpi accent"><small>社長の作業</small><strong id="kpi-owner">5</strong><em>分だけ</em></div>
+        </div>
+        <div class="spark">
+          <small>24時間の出動 <b id="spark-total">0</b>回</small>
+          <svg id="spark" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+        <div class="controls">
+          <button id="pause" type="button">⏸ 動きを止める</button>
+          <button id="theme" type="button">☀ Day</button>
+        </div>
+      </header>
+
+      <!-- 数字のパネル -->
+      <section class="panels">
+        <div class="panel sns">
+          <div class="panel-head">
+            <h2>SNSの数字 <span>合計 <b id="sns-total"></b></span></h2>
+            <span class="pill ok">● 自動で投稿中</span>
+          </div>
+          <div class="sns-grid" id="sns"></div>
+        </div>
+        <div class="panel biz">
+          <div class="panel-head"><h2>事業の数字 <span>今月</span></h2></div>
+          <div class="biz-grid" id="biz"></div>
+        </div>
+        <div class="panel tools">
+          <div class="panel-head"><h2>道具箱 <span>MCP</span></h2></div>
+          <div class="tool-list" id="tools"></div>
+        </div>
+      </section>
+
+      <!-- 組織図 -->
+      <main class="org" id="org">
+        <svg class="wires" id="wires" aria-hidden="true"></svg>
+        <div class="col col-owner">
+          <div class="owner" id="owner"></div>
+          <div class="review-members" id="review-members"></div>
+        </div>
+        <div class="col col-ceo">
+          <div class="ceo" id="ceo"></div>
+          <div class="reviewer" id="reviewer"></div>
+        </div>
+        <div class="col col-lanes" id="lanes"></div>
+      </main>
+
+      <!-- やりとりの流れ -->
+      <footer class="ticker">
+        <span class="step"><b>3</b>AI社員たちが同時に作業 <small>終わったら納品</small></span>
+        <ol id="ticker"></ol>
+      </footer>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
